@@ -1,5 +1,5 @@
 # MetaManager (A Decentralized Collaboration & Productivity Platform) 
-
+ 
 ## Getting Started
 
 First, run the development server:
