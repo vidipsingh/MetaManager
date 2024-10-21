@@ -7,7 +7,7 @@ import github_dp from "../../public/images/112854574.png";
 import { FiGithub } from "react-icons/fi";
 import { FaLinkedinIn } from "react-icons/fa";
 import { FaXTwitter } from "react-icons/fa6";
-
+import Link from 'next/link';
 
 const Hero = () => {
   const texts = [
@@ -69,23 +69,23 @@ const Hero = () => {
             <h1 className=' text-base font-semibold text-gray-400'>MetaManager is a decentralized Web3 platform designed to enhance productivity! <br /> Get started by logging in below.</h1>
 
             <div className='flex justify-center gap-4 my-4 mt-5'>
-            <button className='bg-white text-black px-10 py-1 rounded-md shadow-md hover:bg-gray-400 font-semibold'>Login</button>
-            <button className='bg-white text-black px-10 py-1 rounded-md shadow-md hover:bg-gray-400 font-semibold'>Signup</button>
+            <Link href="/login"> <button className='bg-white text-black px-10 py-1 rounded-md shadow-md hover:bg-gray-400 font-semibold'>Login</button> </Link>
+            <Link href="/signup"> <button className='bg-white text-black px-10 py-1 rounded-md shadow-md hover:bg-gray-400 font-semibold'>Signup</button> </Link>
           </div>
           </div>
         </div>
 
 
         <div className='text-center my-8  flex flex-col justify-center items-center gap-6'>
-          <h1 className='text-white text-2xl font-bold'>An Appy By - </h1>
+          <h1 className='text-white text-2xl font-bold'>An App By - </h1>
           <Image src={github_dp} width={125} height={125} alt={''} className='rounded-full border-[5px] border-yellow-400 '  />
           <h1 className='text-gray-400 text-xl font-bold'>vidipsingh</h1>
         </div>
 
         <div className='flex justify-center gap-10'>
-          <FiGithub className='text-yellow-400/80 hover:text-yellow-400 cursor-pointer h-8 w-8'/>
-          <FaLinkedinIn className='text-yellow-400/80 hover:text-yellow-400 cursor-pointer h-8 w-8'/>
-          <FaXTwitter className='text-yellow-400/80 hover:text-yellow-400 cursor-pointer h-8 w-8'/>
+         <Link href="https://github.com/vidipsingh"> <FiGithub className='text-yellow-400/80 hover:text-yellow-400 cursor-pointer h-8 w-8'/> </Link>
+         <Link href="https://www.linkedin.com/in/vidip-singh-a0aa5b23b/"> <FaLinkedinIn className='text-yellow-400/80 hover:text-yellow-400 cursor-pointer h-8 w-8'/> </Link>
+         <Link href="https://x.com/vidip2025"> <FaXTwitter className='text-yellow-400/80 hover:text-yellow-400 cursor-pointer h-8 w-8'/> </Link>
         </div>
     </div>
   )

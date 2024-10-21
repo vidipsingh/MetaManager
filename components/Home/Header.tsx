@@ -1,13 +1,14 @@
 import React from "react";
 import DarkModeOutlinedIcon from "@mui/icons-material/DarkModeOutlined";
+import Link from "next/link";
 
 const Header = () => {
   return (
     <>
       <div className="bg-gray-800 bg-opacity-50 backdrop-blur-lg text-white flex py-2 px-6 border border-gray-400 rounded-full items-center mx-6 sm:mx-20 justify-between">
-        <div className="text-base sm:text-lg hover:cursor-pointer hover:text-gray-300 font-semibold">
+       <Link href="/"> <div className="text-base sm:text-lg hover:cursor-pointer hover:text-gray-300 font-semibold">
           MetaManager
-        </div>
+        </div> </Link>
 
         <div className="flex items-center gap-4">
           <DarkModeOutlinedIcon className="border border-slate-200 h-8 w-9 py-1 rounded-sm cursor-pointer hover:bg-gray-800"/>
