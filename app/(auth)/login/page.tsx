@@ -5,34 +5,10 @@ import React from 'react'
 import Link from 'next/link'
 import Image from 'next/image';
 import Google from "../../../public/images/google_logo.png";
-import { FormEvent } from 'react';
-import { useRouter } from 'next/navigation'
 import { BackgroundBeams } from '@/components/ui/background-beams';
-import { signIn } from 'next-auth/react';
+import { signIn } from "next-auth/react";
 
 const login = () => {
-  const router = useRouter();
-
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-
-    const formData = new FormData(event.currentTarget)
-    const email = formData.get('email')
-    const password = formData.get('password')
-
-    const response = await fetch('api/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
-    })
-
-    if(response.ok){
-      router.push('/')
-    } else{
-      console.error("Incorrect Credentials");
-    }
-
-  }
 
   return (
     <div className="relative">
@@ -48,7 +24,7 @@ const login = () => {
               <h1 className='my-3'>Don't have an account? <Link href="/signup"> <span className='text-purple-300 underline hover:text-purple-400 cursor-pointer'>Sign Up</span> </Link></h1>
             </div>
 
-            <form action="" onSubmit={handleSubmit} className='flex flex-col mt-6'>
+            <form action="" className='flex flex-col mt-6'>
               <div className='w-full'>
                 <h1 className='text-white/90 mb-1'>Email</h1>
                 <input type="email" name='email' placeholder='Email' required className='bg-slate-800 rounded-sm py-3 px-2 w-full focus:outline-none' />
@@ -65,7 +41,7 @@ const login = () => {
             <div className='flex justify-center items-center my-3 text-white/90'>OR</div>
 
             <div className='w-full flex justify-center items-center'>
-              <button onClick={() => signIn('google')} className='w-full py-2 border border-gray-400 rounded-md flex justify-center items-center gap-1 text-white/90 hover:bg-gray-900'>
+              <button onClick={() => signIn("google", { callbackUrl: "/" })} className='w-full py-2 border border-gray-400 rounded-md flex justify-center items-center gap-1 text-white/90 hover:bg-gray-900'>
               <Image src={Google} width={30} height={30} alt={''} className='rounded-full'  />
                 Sign in With Google</button>
             </div>

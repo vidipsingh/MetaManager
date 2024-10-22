@@ -1,9 +1,12 @@
+"use client"
+
 import React from 'react'
 import Header from '@/components/Home/Header'
 import Link from 'next/link'
 import Image from 'next/image';
 import Google from "../../../public/images/google_logo.png";
 import { BackgroundBeams } from '@/components/ui/background-beams';
+import { signIn } from "next-auth/react";
 
 const SignUp = () => {
   return (
@@ -48,7 +51,7 @@ const SignUp = () => {
           <div className='flex justify-center items-center my-3 text-white/90'>OR</div>
 
           <div className='w-full flex justify-center items-center'>
-            <button className='w-full py-2 border border-gray-400 rounded-md flex justify-center items-center gap-1 text-white/90 hover:bg-gray-900'>
+            <button onClick={() => signIn("google", { callbackUrl: "/" })} className='w-full py-2 border border-gray-400 rounded-md flex justify-center items-center gap-1 text-white/90 hover:bg-gray-900'>
             <Image src={Google} width={30} height={30} alt={''} className='rounded-full'  />
               Sign Up With Google</button>
           </div>
