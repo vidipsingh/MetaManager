@@ -1,7 +1,7 @@
 "use client"
 
 import Header from '@/components/Home/Header'
-import React from 'react'
+import React, { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image';
 import Google from "../../../public/images/google_logo.png";
@@ -9,6 +9,25 @@ import { BackgroundBeams } from '@/components/ui/background-beams';
 import { signIn } from "next-auth/react";
 
 const login = () => {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [message, setMessage] = useState("");
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const res = await fetch("/api/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
+    const data = await res.json();
+    if (data.token) {
+      localStorage.setItem("token", data.token);
+      setMessage("Login successful!");
+    } else {
+      setMessage(data.error);
+    }
+  };
 
   return (
     <div className="relative">
@@ -24,19 +43,20 @@ const login = () => {
               <h1 className='my-3'>Don't have an account? <Link href="/signup"> <span className='text-purple-300 underline hover:text-purple-400 cursor-pointer'>Sign Up</span> </Link></h1>
             </div>
 
-            <form action="" className='flex flex-col mt-6'>
+            <form action="" onSubmit={handleLogin} className='flex flex-col mt-6'>
               <div className='w-full'>
                 <h1 className='text-white/90 mb-1'>Email</h1>
-                <input type="email" name='email' placeholder='Email' required className='bg-slate-800 rounded-sm py-3 px-2 w-full focus:outline-none' />
+                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} name='email' placeholder='Email' required className='bg-slate-800 rounded-sm py-3 px-2 w-full focus:outline-none' />
               </div>
               
               <div className='w-full my-4'>
                 <h1 className='text-white/90 mb-1'>Password</h1>
-                <input type="password" name='password' placeholder='********' required className='bg-slate-800 rounded-sm py-3 px-2 w-full focus:outline-none' />
+                <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} name='password' placeholder='********' required className='bg-slate-800 rounded-sm py-3 px-2 w-full focus:outline-none' />
               </div>
               
               <button type='submit' className='w-full text-lg bg-purple-900 py-1 rounded-sm hover:bg-purple-950 font-semibold'>Login</button>
             </form>
+            {message && <p>{message}</p>}
 
             <div className='flex justify-center items-center my-3 text-white/90'>OR</div>
 
