@@ -1,53 +1,54 @@
 "use client";
-
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation"; // `next/navigation` for App Router
+import { useRouter } from "next/navigation";
+import { useSession, signOut } from "next-auth/react";
 
-export default function DashboardClient({ session }: { session: any }) {
+export default function DashboardClient() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userName, setUserName] = useState("");
   const router = useRouter();
+  const { data: session } = useSession();
 
-  // Check if the user is authenticated
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      router.push("/login");
-    } else {
-      // Fetch user data from the backend
-      const fetchUserData = async () => {
-        try {
-          const res = await fetch("/api/getUserData", {
-            method: "GET",
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          });
+    const checkAuth = async () => {
+      // Check for regular JWT token
+      const token = localStorage.getItem("token");
+      // Check for NextAuth session
+      if (!token && !session?.customToken) {
+        router.push("/login");
+        return;
+      }
 
-          const data = await res.json();
-
-          if (data?.name) {
-            setUserName(data.name);
-            setIsAuthenticated(true);
-          } else {
-            // If token is invalid or user data is not found, redirect to login
-            router.push("/login");
-          }
-        } catch (error) {
-          console.error("Error fetching user data:", error);
+      try {
+        const res = await fetch("/api/getUserData", {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token || session?.customToken}`,
+          },
+        });
+        const data = await res.json();
+        
+        if (data?.name) {
+          setUserName(data.name);
+          setIsAuthenticated(true);
+        } else {
           router.push("/login");
         }
-      };
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+        router.push("/login");
+      }
+    };
 
-      fetchUserData();
-    }
-  }, [router]);
+    checkAuth();
+  }, [router, session]);
 
-  // Function to handle logout
-  const handleLogout = () => {
-    // Remove the token from localStorage
+  const handleLogout = async () => {
+    // Handle both regular and OAuth logout
     localStorage.removeItem("token");
-    // Redirect the user to the login page
+    if (session) {
+      await signOut();
+    }
     router.push("/login");
   };
 
