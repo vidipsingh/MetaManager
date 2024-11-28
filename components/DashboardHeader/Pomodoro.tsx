@@ -8,6 +8,7 @@ const PomodoroTimer = () => {
   const [isRunning, setIsRunning] = useState(false);
   const [mode, setMode] = useState('work'); 
   const timerRef = useRef<HTMLDivElement>(null);
+  const timerIconRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -54,30 +55,34 @@ const PomodoroTimer = () => {
   };
 
   const handleClickOutside = (event: MouseEvent) => {
-    if (timerRef.current && !timerRef.current.contains(event.target as Node)) {
+    // Check if the click is outside both the timer container and the timer icon
+    if (
+      timerRef.current && !timerRef.current.contains(event.target as Node) &&
+      timerIconRef.current && !timerIconRef.current.contains(event.target as Node)
+    ) {
       setIsOpen(false);
     }
   };
 
   useEffect(() => {
-    if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    } else {
-      document.removeEventListener('mousedown', handleClickOutside);
-    }
+    document.addEventListener('mousedown', handleClickOutside);
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [isOpen]);
+  }, []);
 
+  const toggleTimerVisibility = () => {
+    setIsOpen(!isOpen);
+  };
   return (
     <div className="relative">
       <div
-        onClick={() => setIsOpen(!isOpen)}
+        ref={timerIconRef}
+        onClick={toggleTimerVisibility}
         className="cursor-pointer relative"
       >
-        <IoTimerOutline className='w-7 h-7 cursor-pointer hover:text-black/60'/>
+        <IoTimerOutline className='w-7 h-7 cursor-pointer dark:hover:text-white/80 hover:text-black/70'/>
         {isRunning && (
           <div className="absolute top-1 right-0.5 w-1.5 h-1.5 bg-red-500 rounded-full"></div>
         )}

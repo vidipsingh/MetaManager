@@ -90,7 +90,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen dark:bg-slate-950">
       {/* <div className="max-w-4xl mx-auto">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold">
@@ -105,40 +105,40 @@ export default function Dashboard() {
         </div>
       </div> */}
       <Header />
-      <div className="min-h-screen w-1/5 py-4 ml-[0.5px] bg-zinc-100 border-r-[1.5px] border-gray-300">
-      <div className="flex gap-1 items-center w-4/5 bg-white mx-auto rounded-md border-gray-400 border-[1px]">
+      <div className="min-h-screen w-1/5 py-4 ml-[0.5px] bg-zinc-100 dark:bg-slate-950 border-r-[1.5px] border-gray-300 dark:border-gray-500">
+      <div className="flex gap-1 items-center w-4/5 bg-white dark:bg-slate-950 mx-auto rounded-md border-gray-400 border-[1px]">
         <CiSearch className="mx-1"/>
-        <input type="text" placeholder="Search" className="w-36 py-0.5 px-0.5 focus:outline-none focus:ring-0"/>
+        <input type="text" placeholder="Search" className="w-36 py-0.5 px-0.5 focus:outline-none dark:bg-slate-950 focus:ring-0"/>
       </div>
 
-      <div className="font-semibold text-sm mx-6 my-3 text-black/80">MENU</div>
+      <div className="font-semibold text-sm mx-6 my-3 dark:text-white text-black/80">MENU</div>
 
-      <div className="flex gap-2 items-center mx-6 mb-2 py-1 px-1.5 cursor-pointer rounded-md hover:bg-purple-300/60">
+      <div className="flex gap-2 items-center mx-6 mb-2 py-1 px-1.5 cursor-pointer rounded-md  dark:hover:bg-purple-800 hover:bg-purple-300/80">
         <RxDashboard />
         <h1>Dashboard</h1>
       </div>
 
-      <div className="flex gap-2 items-center mx-6 mb-2 py-1 px-1.5 cursor-pointer rounded-md hover:bg-purple-300/60">
+      <div className="flex gap-2 items-center mx-6 mb-2 py-1 px-1.5 cursor-pointer rounded-md dark:hover:bg-purple-800 hover:bg-purple-300/80">
         <IoChatbubbleEllipsesOutline />
         <h1>Chat</h1>
       </div>
 
-      <div className="flex gap-2 items-center mx-6 mb-2 py-1 px-1.5 cursor-pointer rounded-md hover:bg-purple-300/60">
+      <div className="flex gap-2 items-center mx-6 mb-2 py-1 px-1.5 cursor-pointer rounded-md dark:hover:bg-purple-800 hover:bg-purple-300/80">
         <HiOutlineUserGroup />
         <h1>Team</h1>
       </div>
 
-      <div className="flex gap-2 items-center mx-6 mb-2 py-1 px-1.5 cursor-pointer rounded-md hover:bg-purple-300/60">
+      <div className="flex gap-2 items-center mx-6 mb-2 py-1 px-1.5 cursor-pointer rounded-md dark:hover:bg-purple-800 hover:bg-purple-300/80">
         <IoCalendarOutline />
         <h1>Calendar</h1>
       </div>
 
-      <div className="flex gap-2 items-center mx-6 mb-2 py-1 px-1.5 cursor-pointer rounded-md hover:bg-purple-300/60">
+      <div className="flex gap-2 items-center mx-6 mb-2 py-1 px-1.5 cursor-pointer rounded-md dark:hover:bg-purple-800 hover:bg-purple-300/80">
         <IoCallOutline />
         <h1>Calls</h1>
       </div>
 
-      <div className="flex gap-2 items-center mx-6 mb-2 py-1 px-1.5 cursor-pointer rounded-md hover:bg-purple-300/60">
+      <div className="flex gap-2 items-center mx-6 mb-2 py-1 px-1.5 cursor-pointer rounded-md dark:hover:bg-purple-800 hover:bg-purple-300/60">
         <TbCheckbox />
         <h1>To-Do List</h1>
       </div>
