@@ -9,7 +9,7 @@ import { signIn } from "next-auth/react";
 import { AiFillEye, AiFillEyeInvisible } from 'react-icons/ai';
 import Alert from '@mui/material/Alert';
 import { useRouter } from "next/navigation";
-import { BackgroundBeams } from '@/components/ui/background-beams';
+// import { BackgroundBeams } from '@/components/ui/background-beams';
 
 const SignUp = () => {
   const [email, setEmail] = useState("");

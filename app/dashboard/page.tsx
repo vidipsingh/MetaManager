@@ -1,4 +1,3 @@
-// app/dashboard/page.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -7,142 +6,166 @@ import { signOut, useSession } from "next-auth/react";
 import Header from "@/components/DashboardHeader/Header";
 import { CiSearch } from "react-icons/ci";
 import { RxDashboard } from "react-icons/rx";
-import { IoChatbubbleEllipsesOutline } from "react-icons/io5";
+import { IoChatbubbleEllipsesOutline, IoCalendarOutline, IoCallOutline } from "react-icons/io5";
 import { HiOutlineUserGroup } from "react-icons/hi";
-import { IoCalendarOutline } from "react-icons/io5";
-import { IoCallOutline } from "react-icons/io5";
 import { TbCheckbox } from "react-icons/tb";
 
+// Import individual section components
+import DashboardContent from "@/components/DashboardContent";
+import ChatComponent from "@/components/ChatComponent";
+
 export default function Dashboard() {
-  const [isLoading, setIsLoading] = useState(true);
-  const [userData, setUserData] = useState<{ name?: string; email?: string } | null>(null);
-  const router = useRouter();
-  const { data: session, status } = useSession();
+    const [isLoading, setIsLoading] = useState(true);
+    const [userData, setUserData] = useState<{ name?: string; email?: string } | null>(null);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+    const [activeSection, setActiveSection] = useState("Dashboard");
+    const router = useRouter();
+    const { data: session, status } = useSession();
 
-  useEffect(() => {
-    const validateAuth = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        
-        // If no token and no session, redirect to login
-        if (!token && !session && status !== "loading") {
-          router.push("/login");
-          return;
+    useEffect(() => {
+        console.log("Session data:", session);
+        console.log("Session status:", status);
+
+        if (!session && status !== "loading") {
+            router.push("/login");
+            return;
         }
 
-        // Try to get user data
-        const res = await fetch("/api/getUserData", {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token || session?.customToken}`,
-          },
-        });
+        const validateAuth = async () => {
+            try {
+                const token = localStorage.getItem("token");
+                if (!token && !session && status !== "loading") {
+                    router.push("/login");
+                    return;
+                }
+                const res = await fetch("/api/getUserData", {
+                    method: "GET",
+                    headers: {
+                        Authorization: `Bearer ${token || session?.customToken}`,
+                    },
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    setUserData(data);
+                    setIsLoading(false);
+                } else {
+                    localStorage.removeItem("token");
+                    router.push("/login");
+                }
+            } catch (error) {
+                console.error("Auth error:", error);
+                localStorage.removeItem("token");
+                router.push("/login");
+            }
+        };
 
-        if (res.ok) {
-          const data = await res.json();
-          setUserData(data);
-          setIsLoading(false);
-        } else {
-          // If API call fails, clear token and redirect
-          localStorage.removeItem("token");
-          router.push("/login");
+        if (status !== "loading") {
+            validateAuth();
         }
-      } catch (error) {
-        console.error("Auth error:", error);
-        localStorage.removeItem("token");
-        router.push("/login");
-      }
+    }, [session, status, router]);
+
+    const handleLogout = async () => {
+        try {
+            localStorage.removeItem("token");
+            await signOut({ redirect: false });
+            router.push("/login");
+        } catch (error) {
+            console.error("Logout error:", error);
+            router.push("/login");
+        }
     };
 
-    // Only run validation if session status is not loading
-    if (status !== "loading") {
-      validateAuth();
-    }
-  }, [session, status, router]);
+    const toggleSidebar = () => {
+        setIsSidebarOpen(!isSidebarOpen);
+    };
 
-  const handleLogout = async () => {
-    try {
-      // Clear local storage token
-      localStorage.removeItem("token");
-  
-      // Sign the user out using next-auth
-      await signOut({ redirect: false });
-  
-      // Redirect to login page
-      router.push("/login");
-    } catch (error) {
-      console.error("Logout error:", error);
-      router.push("/login");
-    }
-  };
+    const menuItems = [
+        { icon: RxDashboard, name: "Dashboard" },
+        { icon: IoChatbubbleEllipsesOutline, name: "Chat" },
+        { icon: HiOutlineUserGroup, name: "Team" },
+        { icon: IoCalendarOutline, name: "Calendar" },
+        { icon: IoCallOutline, name: "Calls" },
+        { icon: TbCheckbox, name: "To Do List" },
+    ];
 
-  if (isLoading) {
+    const renderSectionContent = () => {
+        if (!userData) return null;
+
+        switch (activeSection) {
+            case "Dashboard":
+                return <DashboardContent />;
+            case "Chat":
+                return <ChatComponent />;
+            case "Team":
+                return <div><h1>Team Section</h1></div>;
+            case "Calendar":
+                return <div><h1>Calendar Section</h1></div>;
+            case "Calls":
+                return <div><h1>Calls Section</h1></div>;
+            case "To Do List":
+                return <div><h1>To Do List Section</h1></div>;
+            default:
+                return <DashboardContent />;
+        }
+    };
+
+    if (isLoading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-black/95">
+                <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-purple-900"></div>
+            </div>
+        );
+    }
+
+    if (!userData) {
+        router.push("/login");
+        return null;
+    }
+
     return (
-      <div className="min-h-screen flex items-center justify-center bg-black/95">
-        <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-purple-900"></div>
-      </div>
-    );
-  }
+        <div className="min-h-screen dark:bg-slate-950">
+            <Header onToggleSidebar={toggleSidebar} onLogout={handleLogout} />
 
-  if (!userData) {
-    router.push("/login");
-    return null;
-  }
+            <div className="flex">
+                <div
+                    className={`min-h-screen ${isSidebarOpen ? "w-[20%]" : "w-[0%]"} transition-width duration-300 overflow-hidden bg-zinc-100 dark:bg-slate-950 border-r-[1.5px] border-gray-300 dark:border-gray-500 py-4`}
+                >
+                    {isSidebarOpen && (
+                        <>
+                            <div className="flex gap-1 items-center bg-white dark:bg-gray-900 mx-4 rounded-md border-gray-400 border-[1px]">
+                                <CiSearch className="mx-1" />
+                                <input
+                                    type="text"
+                                    placeholder="Search"
+                                    className="w-full py-0.5 px-0.5 focus:outline-none dark:bg-gray-900 focus:ring-0"
+                                />
+                            </div>
 
-  return (
-    <div className="min-h-screen dark:bg-slate-950">
-      {/* <div className="max-w-4xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold">
-            Welcome, {userData.name || userData.email}!
-          </h1>
-          <button
-            onClick={handleLogout}
-            className="px-6 py-2 bg-purple-900 text-white rounded hover:bg-purple-950 transition-colors"
-          >
-            Logout
-          </button>
+                            <nav className="my-3 dark:text-white mx-4 text-black/80">
+                                <h1 className="font-bold">MENU</h1>
+                                {menuItems.map(({ icon: Icon, name }) => (
+                                    <div
+                                        key={name}
+                                        className={`flex items-center gap-2 cursor-pointer hover:text-white rounded-md my-1.5 py-1 px-2 ${
+                                            activeSection === name
+                                                ? "bg-purple-600 dark:bg-purple-800 text-white"
+                                                : "hover:bg-purple-600 dark:hover:bg-purple-800"
+                                        }`}
+                                        onClick={() => setActiveSection(name)}
+                                    >
+                                        <Icon className="w-5 h-5" />
+                                        <span>{name}</span>
+                                    </div>
+                                ))}
+                            </nav>
+                        </>
+                    )}
+                </div>
+
+                <div className="flex-1">
+                    {renderSectionContent()}
+                </div>
+            </div>
         </div>
-      </div> */}
-      <Header />
-      <div className="min-h-screen w-1/5 py-4 ml-[0.5px] bg-zinc-100 dark:bg-slate-950 border-r-[1.5px] border-gray-300 dark:border-gray-500">
-      <div className="flex gap-1 items-center w-4/5 bg-white dark:bg-slate-950 mx-auto rounded-md border-gray-400 border-[1px]">
-        <CiSearch className="mx-1"/>
-        <input type="text" placeholder="Search" className="w-36 py-0.5 px-0.5 focus:outline-none dark:bg-slate-950 focus:ring-0"/>
-      </div>
-
-      <div className="font-semibold text-sm mx-6 my-3 dark:text-white text-black/80">MENU</div>
-
-      <div className="flex gap-2 items-center mx-6 mb-2 py-1 px-1.5 cursor-pointer rounded-md  dark:hover:bg-purple-800 hover:bg-purple-300/80">
-        <RxDashboard />
-        <h1>Dashboard</h1>
-      </div>
-
-      <div className="flex gap-2 items-center mx-6 mb-2 py-1 px-1.5 cursor-pointer rounded-md dark:hover:bg-purple-800 hover:bg-purple-300/80">
-        <IoChatbubbleEllipsesOutline />
-        <h1>Chat</h1>
-      </div>
-
-      <div className="flex gap-2 items-center mx-6 mb-2 py-1 px-1.5 cursor-pointer rounded-md dark:hover:bg-purple-800 hover:bg-purple-300/80">
-        <HiOutlineUserGroup />
-        <h1>Team</h1>
-      </div>
-
-      <div className="flex gap-2 items-center mx-6 mb-2 py-1 px-1.5 cursor-pointer rounded-md dark:hover:bg-purple-800 hover:bg-purple-300/80">
-        <IoCalendarOutline />
-        <h1>Calendar</h1>
-      </div>
-
-      <div className="flex gap-2 items-center mx-6 mb-2 py-1 px-1.5 cursor-pointer rounded-md dark:hover:bg-purple-800 hover:bg-purple-300/80">
-        <IoCallOutline />
-        <h1>Calls</h1>
-      </div>
-
-      <div className="flex gap-2 items-center mx-6 mb-2 py-1 px-1.5 cursor-pointer rounded-md dark:hover:bg-purple-800 hover:bg-purple-300/60">
-        <TbCheckbox />
-        <h1>To-Do List</h1>
-      </div>
-    </div>
-    </div>
-  );
+    );
 }

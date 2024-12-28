@@ -5,7 +5,7 @@ import React, { useEffect, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import Google from "../../../public/images/google_logo.png"
-import { BackgroundBeams } from '@/components/ui/background-beams'
+// import { BackgroundBeams } from '@/components/ui/background-beams'
 import { AiFillEye, AiFillEyeInvisible } from 'react-icons/ai';
 import { signIn } from "next-auth/react"
 import Alert from '@mui/material/Alert'
@@ -110,7 +110,7 @@ const Login = () => {
               <div>
                 <h1 className='text-5xl font-semibold dark:text-white text-black'>Login</h1>
                 <h1 className='my-3 dark:text-white text-black'>
-                  Don't have an account? 
+                  Don&apos;t have an account? 
                   <Link href="/signup"> 
                     <span className='dark:text-purple-300 text-purple-800 hover:text-purple-950 underline dark:hover:text-purple-400 cursor-pointer ml-1'>
                       Sign Up

@@ -17,7 +17,7 @@ const handler = NextAuth({
   callbacks: {
     async signIn({ user, account }) {
       if (!user.email) return false;
-      
+
       try {
         let dbUser = await prisma.user.findUnique({
           where: { email: user.email },
