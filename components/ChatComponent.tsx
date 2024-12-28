@@ -1,4 +1,3 @@
-// ChatComponent.tsx
 import React, { useEffect, useRef, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { Socket, io } from 'socket.io-client';
@@ -33,13 +32,14 @@ const ChatComponent = () => {
   const router = useRouter();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [selectedUserId, setSelectedUserId] = useState<string>('');
+  const [conversationId, setConversationId] = useState<string>('');
 
-  // Scroll to bottom when new messages arrive
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
   }, [messages]);
 
-  // Ensure user is authenticated
   useEffect(() => {
     if (!session && status !== "loading") {
       router.push("/login");
@@ -61,51 +61,60 @@ const ChatComponent = () => {
     fetchAllUsers();
   }, [session, status, router]);
 
-  // Initialize socket connection
   useEffect(() => {
     if (!session?.user?.id) return;
-  
+
     const socketInstance = io('http://localhost:3000', {
       path: '/api/socketio',
       auth: {
         token: session?.customToken
       }
     });
-  
+
     socketInstance.on('connect', () => {
       console.log('Socket connected:', socketInstance.id);
-      // Join user's room
       socketInstance.emit('join', session.user.id);
     });
-  
+
     socketInstance.on('new-message', (message: Message) => {
-      console.log('Received message:', message);
-      // Only add message if it belongs to the current conversation
-      if (
-        (message.senderId === selectedUserId && message.receiverId === session.user.id) ||
-        (message.senderId === session.user.id && message.receiverId === selectedUserId)
-      ) {
-        setMessages(prev => [...prev, message]);
-      }
+      setMessages(prev => {
+        const exists = prev.some(m => m.id === message.id);
+        if (exists) return prev;
+        
+        if (message.conversationId === conversationId) {
+          return [...prev, message];
+        }
+        return prev;
+      });
     });
-  
+
     setSocket(socketInstance);
-  
+
     return () => {
       socketInstance.disconnect();
     };
-  }, [session, selectedUserId]);
+  }, [session, conversationId]);
 
-  // Load conversation history when user is selected
   useEffect(() => {
     const loadConversation = async () => {
       if (!session?.user?.id || !selectedUserId) return;
 
       try {
-        const response = await fetch(`/api/getMessages?conversationId=${session.user.id}-${selectedUserId}`);
+        const response = await fetch('/api/conversations', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            userId: session.user.id,
+            receiverId: selectedUserId,
+          }),
+        });
+
         if (response.ok) {
-          const history = await response.json();
-          setMessages(history);
+          const conversation = await response.json();
+          setConversationId(conversation.id);
+          setMessages(conversation.messages || []);
         }
       } catch (error) {
         console.error("Error loading conversation:", error);
@@ -115,37 +124,42 @@ const ChatComponent = () => {
     loadConversation();
   }, [selectedUserId, session?.user?.id]);
 
-  // Send message handler
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMessage.trim() || !session?.user?.id || !selectedUserId) return;
+    if (!newMessage.trim() || !session?.user?.id || !selectedUserId || !conversationId) return;
 
     const messageData = {
       id: Date.now().toString(),
       content: newMessage,
       senderId: session.user.id,
       receiverId: selectedUserId,
-      conversationId: `${session.user.id}-${selectedUserId}`,
+      conversationId: conversationId,
       createdAt: new Date().toISOString()
     };
 
-    // Add message to local state
-    setMessages(prev => [...prev, messageData]);
-    
-    // Emit through socket
-    socket?.emit('send-message', messageData);
-    
-    // Clear input
-    setNewMessage('');
+    try {
+      const response = await fetch('/api/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(messageData),
+      });
+
+      if (response.ok) {
+        socket?.emit('send-message', messageData);
+        setNewMessage('');
+      }
+    } catch (error) {
+      console.error("Error sending message:", error);
+    }
   };
 
-  // Filter out current user from users list
   const otherUsers = allUsers.filter(user => user.id !== session?.user?.id);
 
   return (
-    <div className="flex">
-      {/* Users list */}
-      <div className="w-1/3 bg-gray-50 dark:bg-slate-900 border-r p-2">
+    <div className="flex h-screen">
+      <div className="w-1/3 bg-gray-50 dark:bg-slate-900 border-r">
         <ScrollArea className="h-full">
           {otherUsers.map((user) => (
             <div 
@@ -161,7 +175,7 @@ const ChatComponent = () => {
                     {user.name?.[0] || user.email?.[0] || '?'}
                   </AvatarFallback>
                 </Avatar>
-                <span className="font-semibold text-sm dark:hover:text-black">
+                <span className="font-semibold text-sm">
                   {user.name || user.email}
                 </span>
               </div>
@@ -170,27 +184,41 @@ const ChatComponent = () => {
         </ScrollArea>
       </div>
 
-      {/* Chat area */}
-      <Card className="w-3/4 h-[600px] flex flex-col">
-        <CardContent className="rounded-none flex flex-col h-full p-4">
-          <ScrollArea className="flex-grow mb-4 pr-4">
-            <div className="space-y-4">
+      <Card className="flex-1 flex flex-col">
+        <CardContent className="flex-1 flex flex-col p-4 h-full">
+          <ScrollArea className="flex-1 h-[calc(100vh-12rem)]"> {/* Adjusted height */}
+            <div className="space-y-4 min-h-full">
               {messages.map((message) => {
                 const isCurrentUser = message.senderId === session?.user?.id;
                 const user = allUsers.find(u => u.id === message.senderId);
                 
                 return (
-                  <div key={message.id} className={`flex items-start gap-2 ${isCurrentUser ? 'flex-row-reverse' : ''}`}>
-                    <Avatar className="w-8 h-8">
-                      <AvatarFallback className={`${isCurrentUser ? 'bg-blue-600' : 'bg-purple-600'} text-white`}>
-                        {user?.name?.[0] || user?.email?.[0] || '?'}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className={`p-3 max-w-[70%] ${isCurrentUser ? 'bg-blue-500 text-white' : 'bg-gray-100'} rounded-md`}>
-                      <p className={`text-sm break-words ${isCurrentUser ? 'text-white' : 'dark:text-black'}`}>
+                  <div key={message.id} className={`flex items-start gap-2 ${isCurrentUser ? 'justify-end' : 'justify-start'}`}>
+                    {!isCurrentUser && (
+                      <Avatar className="w-8 h-8">
+                        <AvatarFallback className="bg-purple-600 text-white">
+                          {user?.name?.[0] || user?.email?.[0] || '?'}
+                        </AvatarFallback>
+                      </Avatar>
+                    )}
+                    <div 
+                      className={`p-3 rounded-lg max-w-[70%] ${
+                        isCurrentUser 
+                          ? 'bg-blue-500 text-white' 
+                          : 'bg-gray-100 dark:bg-gray-700'
+                      }`}
+                    >
+                      <p className="text-sm break-words">
                         {message.content}
                       </p>
                     </div>
+                    {isCurrentUser && (
+                      <Avatar className="w-8 h-8">
+                        <AvatarFallback className="bg-blue-600 text-white">
+                          {user?.name?.[0] || user?.email?.[0] || '?'}
+                        </AvatarFallback>
+                      </Avatar>
+                    )}
                   </div>
                 );
               })}
@@ -198,8 +226,7 @@ const ChatComponent = () => {
             </div>
           </ScrollArea>
 
-          {/* Message input form */}
-          <form onSubmit={sendMessage} className="flex gap-2">
+          <form onSubmit={sendMessage} className="flex gap-2 mt-4">
             <Input
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
@@ -207,7 +234,9 @@ const ChatComponent = () => {
               className="flex-grow"
               disabled={!selectedUserId}
             />
-            <Button type="submit" disabled={!selectedUserId}>Send</Button>
+            <Button type="submit" disabled={!selectedUserId}>
+              Send
+            </Button>
           </form>
         </CardContent>
       </Card>

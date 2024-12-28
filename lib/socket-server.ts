@@ -1,3 +1,4 @@
+// lib/socket-server.ts
 import { Server as NetServer } from 'http';
 import { Server as SocketIOServer } from 'socket.io';
 
@@ -21,12 +22,14 @@ export const initializeSocket = (httpServer: NetServer) => {
     io.on('connection', (socket) => {
       console.log('Client connected:', socket.id);
 
-      socket.on('send-message', async (data) => {
-        try {
-          io.emit('new-message', data); // Emit new message to all clients
-        } catch (error) {
-          console.error('Error sending message:', error);
-        }
+      socket.on('join', (userId: string) => {
+        socket.join(userId);
+      });
+
+      socket.on('send-message', (message) => {
+        // Emit to both sender and receiver rooms
+        io.to(message.senderId).emit('new-message', message);
+        io.to(message.receiverId).emit('new-message', message);
       });
 
       socket.on('disconnect', () => {
@@ -34,4 +37,5 @@ export const initializeSocket = (httpServer: NetServer) => {
       });
     });
   }
+  return io;
 };
