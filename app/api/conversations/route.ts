@@ -11,6 +11,20 @@ export async function POST(req: Request) {
 
     const { userId, receiverId } = await req.json();
 
+    // Verify both users exist
+    const [sender, receiver] = await Promise.all([
+      prisma.user.findUnique({ where: { id: userId } }),
+      prisma.user.findUnique({ where: { id: receiverId } })
+    ]);
+
+    if (!sender || !receiver) {
+      console.error('User not found:', { senderId: userId, receiverId });
+      return NextResponse.json(
+        { error: 'One or both users not found' },
+        { status: 404 }
+      );
+    }
+
     // Check if conversation exists
     let conversation = await prisma.conversation.findFirst({
       where: {
@@ -33,20 +47,34 @@ export async function POST(req: Request) {
 
     // If no conversation exists, create one
     if (!conversation) {
-      conversation = await prisma.conversation.create({
-        data: {
-          users: {
-            connect: [{ id: userId }, { id: receiverId }],
-          },
-        },
-        include: {
-          messages: {
-            include: {
-              sender: true,
+      try {
+        conversation = await prisma.conversation.create({
+          data: {
+            users: {
+              connect: [
+                { id: userId },
+                { id: receiverId }
+              ],
             },
           },
-        },
-      });
+          include: {
+            messages: {
+              include: {
+                sender: true,
+              },
+              orderBy: {
+                createdAt: 'asc',
+              },
+            },
+          },
+        });
+      } catch (error) {
+        console.error('Error creating conversation:', error);
+        return NextResponse.json(
+          { error: 'Failed to create conversation' },
+          { status: 500 }
+        );
+      }
     }
 
     return NextResponse.json(conversation);

@@ -52,11 +52,35 @@ export const authOptions: AuthOptions = {
     signOut: '/login',
     error: '/login',
   },
-  session: {
-    strategy: "jwt",
-    maxAge: 24 * 60 * 60, // 24 hours
-  },
   callbacks: {
+    async signIn({ user, account }) {
+      if (account?.provider === "google") {
+        try {
+          // Check if user exists
+          const existingUser = await prisma.user.findUnique({
+            where: { email: user.email! }
+          });
+
+          if (!existingUser) {
+            // Create new user if doesn't exist
+            const newUser = await prisma.user.create({
+              data: {
+                email: user.email!,
+                name: user.name!,
+                emailVerified: new Date(),
+              }
+            });
+            user.id = newUser.id;
+          } else {
+            user.id = existingUser.id;
+          }
+        } catch (error) {
+          console.error("Error in signIn callback:", error);
+          return false;
+        }
+      }
+      return true;
+    },
     async jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = user.id;
