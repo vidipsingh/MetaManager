@@ -1,3 +1,5 @@
+"use client"
+
 import React, { useEffect, useRef, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { Socket, io } from 'socket.io-client';
@@ -23,7 +25,11 @@ interface Message {
   createdAt: string;
 }
 
-const ChatComponent = () => {
+interface ChatComponentProps {
+  initialSelectedUserId?: string;
+}
+
+const ChatComponent: FC<ChatComponentProps> = ({ initialSelectedUserId }) => {
   const { data: session, status } = useSession();
   const [socket, setSocket] = useState<Socket | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -31,7 +37,7 @@ const ChatComponent = () => {
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const router = useRouter();
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [selectedUserId, setSelectedUserId] = useState<string>('');
+  const [selectedUserId, setSelectedUserId] = useState<string>(initialSelectedUserId || '');
   const [conversationId, setConversationId] = useState<string>('');
 
   useEffect(() => {
@@ -186,8 +192,8 @@ const ChatComponent = () => {
 
       <Card className="flex-1 flex flex-col">
         <CardContent className="flex-1 flex flex-col p-4 h-full">
-          <ScrollArea className="flex-1 h-[calc(100vh-12rem)]"> {/* Adjusted height */}
-            <div className="space-y-4 min-h-full">
+          <ScrollArea className="flex-1 h-[calc(100vh-12rem)]">
+          <div className="space-y-4 min-h-full">
               {messages.map((message) => {
                 const isCurrentUser = message.senderId === session?.user?.id;
                 const user = allUsers.find(u => u.id === message.senderId);
