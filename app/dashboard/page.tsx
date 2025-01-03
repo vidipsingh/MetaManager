@@ -14,6 +14,7 @@ import { HiMenuAlt2 } from "react-icons/hi";
 import DashboardContent from "@/components/DashboardContent";
 import ChatComponent from "@/components/ChatComponent";
 import TeamComponent from "@/components/TeamComponent";
+import CallComponent from "@/components/CallComponent";
 
 export default function Dashboard() {
     const [isLoading, setIsLoading] = useState(true);
@@ -122,7 +123,7 @@ export default function Dashboard() {
             case "Calendar":
                 return <div className="p-4"><h1>Calendar Section</h1></div>;
             case "Calls":
-                return <div className="p-4"><h1>Calls Section</h1></div>;
+                return <CallComponent />;
             case "To Do List":
                 return <div className="p-4"><h1>To Do List Section</h1></div>;
             default:
