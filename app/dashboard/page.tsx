@@ -9,12 +9,13 @@ import { RxDashboard } from "react-icons/rx";
 import { IoChatbubbleEllipsesOutline, IoCalendarOutline, IoCallOutline } from "react-icons/io5";
 import { HiOutlineUserGroup } from "react-icons/hi";
 import { TbCheckbox } from "react-icons/tb";
-import { HiMenuAlt2 } from "react-icons/hi";
+// import { HiMenuAlt2 } from "react-icons/hi";
 
 import DashboardContent from "@/components/DashboardContent";
 import ChatComponent from "@/components/ChatComponent";
 import TeamComponent from "@/components/TeamComponent";
 import CallComponent from "@/components/CallComponent";
+// import dynamic from 'next/dynamic';
 
 export default function Dashboard() {
     const [isLoading, setIsLoading] = useState(true);
@@ -123,7 +124,11 @@ export default function Dashboard() {
             case "Calendar":
                 return <div className="p-4"><h1>Calendar Section</h1></div>;
             case "Calls":
-                return <CallComponent />;
+                return (
+                    <div className="h-full">
+                        <CallComponent />
+                    </div>
+                );
             case "To Do List":
                 return <div className="p-4"><h1>To Do List Section</h1></div>;
             default:

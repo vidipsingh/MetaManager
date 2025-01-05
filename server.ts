@@ -1,7 +1,7 @@
 import { createServer } from 'http';
 import { parse } from 'url';
 import next from 'next';
-import { initializeSocket } from './lib/socket-server';
+import { SocketService } from './lib/socket';
 
 const dev = process.env.NODE_ENV !== 'production';
 const app = next({ dev });
@@ -14,7 +14,8 @@ app.prepare().then(() => {
   });
 
   // Initialize Socket.IO with the HTTP server
-  initializeSocket(server);
+  const socketService = SocketService.getInstance();
+  socketService.initializeSocket(server);
 
   server.listen(3000, () => {
     console.log('> Ready on http://localhost:3000');
