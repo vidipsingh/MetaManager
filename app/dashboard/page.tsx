@@ -15,6 +15,7 @@ import DashboardContent from "@/components/DashboardContent";
 import ChatComponent from "@/components/ChatComponent";
 import TeamComponent from "@/components/TeamComponent";
 import CallComponent from "@/components/CallComponent";
+import ListComponent from "@/components/ListComponent";
 // import dynamic from 'next/dynamic';
 
 export default function Dashboard() {
@@ -130,7 +131,7 @@ export default function Dashboard() {
                     </div>
                 );
             case "To Do List":
-                return <div className="p-4"><h1>To Do List Section</h1></div>;
+                return <ListComponent />;
             default:
                 return <DashboardContent />;
         }

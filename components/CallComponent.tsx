@@ -133,12 +133,14 @@ const CallComponent = () => {
   useEffect(() => {
     if (localVideoRef.current && localStream) {
       localVideoRef.current.srcObject = localStream;
+      localVideoRef.current.muted = true; // Mute local video
     }
   }, [localStream]);
 
   useEffect(() => {
     if (remoteVideoRef.current && remoteStream) {
       remoteVideoRef.current.srcObject = remoteStream;
+      remoteVideoRef.current.muted = false; // Ensure remote video isn't muted
     }
   }, [remoteStream]);
 
@@ -157,17 +159,36 @@ const CallComponent = () => {
   const createPeerConnection = () => {
     const configuration = {
       iceServers: [
-        { urls: 'stun:stun.l.google.com:19302' },
-        { urls: 'stun:stun1.l.google.com:19302' }
-      ]
+        { 
+          urls: [
+            'stun:stun1.l.google.com:19302',
+            'stun:stun2.l.google.com:19302'
+          ]
+        },
+        {
+          urls: ['turn:your-turn-server.com:3478'],
+          username: 'your_username',
+          credential: 'your_password'
+        }
+      ],
+      iceCandidatePoolSize: 10
     };
 
     const pc = new RTCPeerConnection(configuration);
 
-    pc.ontrack = (event) => {
-      console.log('Received remote track:', event.streams[0]);
-      setRemoteStream(event.streams[0]);
-    };
+  pc.ontrack = (event) => {
+    console.log('Received remote track:', event.streams[0]);
+    // Set remote stream for each track received
+    if (event.streams[0]) {
+      event.streams[0].getTracks().forEach(track => {
+        if (!remoteStream) {
+          setRemoteStream(event.streams[0]);
+        } else {
+          remoteStream.addTrack(track);
+        }
+      });
+    }
+  };
 
     pc.onicecandidate = (event) => {
       if (event.candidate && selectedUser && socketRef.current) {
@@ -187,7 +208,8 @@ const CallComponent = () => {
       }
     };
 
-    return pc;
+      // Rest of the code remains same
+  return pc;
   };
 
   const initializeMedia = async () => {
@@ -198,19 +220,18 @@ const CallComponent = () => {
       });
       setLocalStream(stream);
       return stream;
-    } catch (error) {
-      console.error('Error accessing media devices:', error);
-      // Try audio only if video fails
+    } catch (videoError) {
+      console.warn('Video failed, trying audio only:', videoError);
       try {
         const audioStream = await navigator.mediaDevices.getUserMedia({
           audio: true,
           video: false
         });
-        setLocalStream(audioStream);
         setIsVideoEnabled(false);
+        setLocalStream(audioStream);
         return audioStream;
       } catch (audioError) {
-        console.error('Error accessing audio:', audioError);
+        console.error('Audio also failed:', audioError);
         throw audioError;
       }
     }
@@ -478,23 +499,24 @@ const CallComponent = () => {
                 <div className="flex-1 grid grid-cols-2 gap-4 relative">
                   <div className="relative">
                     <video
-                      ref={localVideoRef}
-                      autoPlay
-                      playsInline
-                      muted
-                      className="w-full h-full object-cover rounded-lg bg-gray-800"
-                    />
+  ref={localVideoRef}
+  autoPlay
+  playsInline
+  muted={true} // Always mute local video
+  style={{ transform: 'scaleX(-1)' }} // Mirror local video
+  className="w-full h-full object-cover rounded-lg bg-gray-800"
+/>
                     <p className="absolute bottom-2 left-2 bg-black/50 text-white px-2 py-1 rounded">
                       You
                     </p>
                   </div>
                   <div className="relative">
-                    <video
-                      ref={remoteVideoRef}
-                      autoPlay
-                      playsInline
-                      className="w-full h-full object-cover rounded-lg bg-gray-800"
-                    />
+                  <video
+  ref={remoteVideoRef}
+  autoPlay
+  playsInline
+  className="w-full h-full object-cover rounded-lg bg-gray-800"
+/>
                     <p className="absolute bottom-2 left-2 bg-black/50 text-white px-2 py-1 rounded">
                       {selectedUser?.name || selectedUser?.email}
                     </p>
