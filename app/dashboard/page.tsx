@@ -16,6 +16,7 @@ import ChatComponent from "@/components/ChatComponent";
 import TeamComponent from "@/components/TeamComponent";
 import CallComponent from "@/components/CallComponent";
 import ListComponent from "@/components/ListComponent";
+import CalendarComponent from "@/components/CalendarComponent";
 // import dynamic from 'next/dynamic';
 
 export default function Dashboard() {
@@ -123,7 +124,7 @@ export default function Dashboard() {
             case "Team":
                 return <TeamComponent onChatSelect={handleChatSelect} />;
             case "Calendar":
-                return <div className="p-4"><h1>Calendar Section</h1></div>;
+                return <CalendarComponent />;
             case "Calls":
                 return (
                     <div className="h-full">

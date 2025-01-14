@@ -29,6 +29,18 @@ model Todo {
   project     Project? @relation(fields: [projectId], references: [id])
 }
 
+model CalendarEvent {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  startTime   DateTime
+  endTime     DateTime
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+}
+
 model Project {
   id        String   @id @default(cuid())
   name      String
@@ -60,6 +72,7 @@ model User {
   conversations    Conversation[]
   todos     Todo[]
   projects  Project[]
+  calendarEvents CalendarEvent[]
 }
 
 model Message {
