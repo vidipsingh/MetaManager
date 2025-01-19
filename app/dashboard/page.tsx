@@ -118,7 +118,7 @@ export default function Dashboard() {
 
         switch (activeSection) {
             case "Dashboard":
-                return <DashboardContent />;
+                return <DashboardContent onTodoClick={() => setActiveSection("To Do List")} />;
             case "Chat":
                 return <ChatComponent initialSelectedUserId={selectedChatUserId || ''} />;
             case "Team":

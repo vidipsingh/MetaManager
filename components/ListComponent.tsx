@@ -371,22 +371,6 @@ const ListComponent = () => {
                   <SelectItem value="URGENT">Urgent</SelectItem>
                 </SelectContent>
               </Select>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" className="w-full bg-white/80 hover:text-white/40">
-                    <CalendarIcon className="mr-2 h-4 w-4 "/>
-                    {editingTodo.dueDate ? format(new Date(editingTodo.dueDate), 'PPP') : 'Pick a date'}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={editingTodo.dueDate ? new Date(editingTodo.dueDate) : undefined}
-                    onSelect={(date) => setEditingTodo({ ...editingTodo, dueDate: date })}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
             </div>
           )}
           <DialogFooter>
