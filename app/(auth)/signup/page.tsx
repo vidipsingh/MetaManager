@@ -9,7 +9,7 @@ import { signIn } from "next-auth/react";
 import { AiFillEye, AiFillEyeInvisible } from 'react-icons/ai';
 import Alert from '@mui/material/Alert';
 import { useRouter } from "next/navigation";
-// import { BackgroundBeams } from '@/components/ui/background-beams';
+import { BackgroundBeams } from '@/components/ui/background-beams';
 
 const SignUp = () => {
   const [email, setEmail] = useState("");
@@ -77,6 +77,7 @@ const SignUp = () => {
 
   return (
     <div className='relative'>
+      <BackgroundBeams />
       <div className='w-full 2xl:h-[1000px] lg:h-[700px] md:h-[800px] sm:h-[700px] h-[700px] pt-5 bg-gray-200 dark:bg-black/95'>
         <div className="flex justify-center items-center">
           {showAlert && (
@@ -89,7 +90,6 @@ const SignUp = () => {
         </div>
         
         <Header />
-        {/* <BackgroundBeams /> */}
         <div className="flex justify-center items-center my-8 z-40 relative">
           <div className='flex justify-between md:w-1/2 lg:w-2/5 text-white px-4'>
             <div className='w-full p-5 border border-gray-400 rounded-md bg-white/60 dark:bg-black/90'>

@@ -54,13 +54,13 @@ const Hero = () => {
   }, [currentText, isDeleting, index]);
 
   return (
-    <div className='mb-20 bg-gray-200 dark:bg-slate-950'>
+    <div className='mb-20'>
         <div className='text-white text-center h-60 py-5 flex flex-col items-center justify-center mt-16 sm:mt-20 mb-4'>
             <h1 className='md:text-5xl sm:text-4xl dark:text-white text-black text-3xl font-bold sm:w-1/2 w-2/3'>Decentralized Productivity Web3 Platform</h1>
             <div className='my-4'>
               <h1 className='sm:flex hidden lg:text-4xl md:text-3xl sm:text-2xl text-xl sm:py-0 px-2 sm:px-0 py-4 font-bold text-amber-400 dark:text-yellow-400'>{currentText}</h1>
             </div>
-            <h1 className='sm:w-2/5 md:w-1/2 w-3/4 text-lg mt-4 text-gray-800 dark:text-gray-400'>A decentralized Web3 platform boosting productivity with secure, private, and seamless collaboration.</h1>
+            <h1 className='sm:w-2/5 md:w-1/2 w-3/4 text-lg mt-4 text-gray-800 dark:text-gray-200'>A decentralized Web3 platform boosting productivity with secure, private, and seamless collaboration.</h1>
         </div>
 
         <div className='w-full text-white flex flex-col items-center justify-center text-center lg:mt-10 md:mt-14 sm:mt-16 mt-8'>
@@ -82,10 +82,10 @@ const Hero = () => {
           <h1 className='dark:text-gray-400 text-gray-600 text-xl font-bold'>vidipsingh</h1>
         </div>
 
-        <div className='flex justify-center gap-10'>
+        <div className='flex justify-center gap-10 pb-2'>
          <Link href="https://github.com/vidipsingh"> <FiGithub className='dark:text-yellow-400/80 text-amber-400 hover:text-amber-500  dark:hover:text-yellow-400 cursor-pointer h-8 w-8'/> </Link>
-         <Link href="https://www.linkedin.com/in/vidip-singh-a0aa5b23b/"> <FaLinkedinIn className=' text-amber-400 hover:text-amber-500 dark:text-yellow-400/80 dark:hover:text-yellow-400 cursor-pointer h-8 w-8'/> </Link>
-         <Link href="https://x.com/vidip2025"> <FaXTwitter className=' text-amber-400 hover:text-amber-500 dark:text-yellow-400/80 dark:hover:text-yellow-400 cursor-pointer h-8 w-8'/> </Link>
+         <Link href="https://www.linkedin.com/in/vidip-singh-a0aa5b23b/"> <FaLinkedinIn className=' text-amber-400/80 hover:text-amber-500 dark:text-yellow-400/80 dark:hover:text-yellow-400 cursor-pointer h-8 w-8'/> </Link>
+         <Link href="https://x.com/vidip2025"> <FaXTwitter className=' text-amber-400/80 hover:text-amber-500 dark:text-yellow-400/80 dark:hover:text-yellow-400 cursor-pointer h-8 w-8'/> </Link>
         </div>
     </div>
   )

@@ -2,6 +2,19 @@
 @tailwind components;
 @tailwind utilities;
 @layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground min-h-screen;
+    margin: 0;
+    padding: 0;
+  }
+  html {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+  }
   :root {
     --background: 0 0% 100%;
     --foreground: 0 0% 3.9%;

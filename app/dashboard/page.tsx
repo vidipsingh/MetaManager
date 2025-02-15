@@ -9,7 +9,6 @@ import { RxDashboard } from "react-icons/rx";
 import { IoChatbubbleEllipsesOutline, IoCalendarOutline, IoCallOutline } from "react-icons/io5";
 import { HiOutlineUserGroup } from "react-icons/hi";
 import { TbCheckbox } from "react-icons/tb";
-// import { HiMenuAlt2 } from "react-icons/hi";
 
 import DashboardContent from "@/components/DashboardContent";
 import ChatComponent from "@/components/ChatComponent";
@@ -17,7 +16,6 @@ import TeamComponent from "@/components/TeamComponent";
 import CallComponent from "@/components/CallComponent";
 import ListComponent from "@/components/ListComponent";
 import CalendarComponent from "@/components/CalendarComponent";
-// import dynamic from 'next/dynamic';
 
 export default function Dashboard() {
     const [isLoading, setIsLoading] = useState(true);
@@ -26,8 +24,22 @@ export default function Dashboard() {
     const [activeSection, setActiveSection] = useState("Dashboard");
     const [selectedChatUserId, setSelectedChatUserId] = useState<string | null>(null);
     const [isMobile, setIsMobile] = useState(false);
+    const [searchQuery, setSearchQuery] = useState("");
     const router = useRouter();
     const { data: session, status } = useSession();
+
+    const menuItems = [
+        { icon: RxDashboard, name: "Dashboard" },
+        { icon: IoChatbubbleEllipsesOutline, name: "Chat" },
+        { icon: HiOutlineUserGroup, name: "Team" },
+        { icon: IoCalendarOutline, name: "Calendar" },
+        { icon: IoCallOutline, name: "Calls" },
+        { icon: TbCheckbox, name: "To Do List" },
+    ];
+
+    const filteredMenuItems = menuItems.filter(item =>
+        item.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
 
     useEffect(() => {
         const handleResize = () => {
@@ -104,15 +116,6 @@ export default function Dashboard() {
         setIsSidebarOpen(!isSidebarOpen);
     };
 
-    const menuItems = [
-        { icon: RxDashboard, name: "Dashboard" },
-        { icon: IoChatbubbleEllipsesOutline, name: "Chat" },
-        { icon: HiOutlineUserGroup, name: "Team" },
-        { icon: IoCalendarOutline, name: "Calendar" },
-        { icon: IoCallOutline, name: "Calls" },
-        { icon: TbCheckbox, name: "To Do List" },
-    ];
-
     const renderSectionContent = () => {
         if (!userData) return null;
 
@@ -134,7 +137,7 @@ export default function Dashboard() {
             case "To Do List":
                 return <ListComponent />;
             default:
-                return <DashboardContent />;
+                return <DashboardContent onTodoClick={() => setActiveSection("To Do List")} />;
         }
     };
 
@@ -165,8 +168,7 @@ export default function Dashboard() {
 
                 {/* Sidebar */}
                 <div
-                    className={`fixed md:static ${isSidebarOpen ? 'w-64 sm:w-1/4 md:w-1/5' : 'w-0'} z-30 md:z-0 pt-4 transition-all duration-300 h-fullbg-zinc-100 dark:bg-slate-950 border-r-[1.5px] border-gray-300 dark:border-gray-500 overflow-hidden
-                    `}
+                    className={`fixed md:static ${isSidebarOpen ? 'w-64 sm:w-1/4 md:w-1/5' : 'w-0'} z-30 md:z-0 pt-4 transition-all duration-300 h-full bg-zinc-100 dark:bg-slate-950 border-r-[1.5px] border-gray-300 dark:border-gray-500 overflow-hidden`}
                 >
                     {/* Sidebar content */}
                     <div className="flex flex-col h-full">
@@ -175,13 +177,15 @@ export default function Dashboard() {
                             <input
                                 type="text"
                                 placeholder="Search"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
                                 className="w-full py-0.5 px-0.5 focus:outline-none dark:bg-gray-900 focus:ring-0"
                             />
                         </div>
 
                         <nav className="my-3 dark:text-white mx-4 text-black/80 flex-1">
                             <h1 className="font-bold">MENU</h1>
-                            {menuItems.map(({ icon: Icon, name }) => (
+                            {filteredMenuItems.map(({ icon: Icon, name }) => (
                                 <div
                                     key={name}
                                     className={`flex items-center gap-2 cursor-pointer hover:text-white rounded-md my-1.5 py-1 px-2 ${
