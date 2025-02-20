@@ -164,7 +164,7 @@ const ChatComponent: FC<ChatComponentProps> = ({ initialSelectedUserId }) => {
   const otherUsers = allUsers.filter(user => user.id !== session?.user?.id);
 
   return (
-    <div className="flex h-screen">
+    <div className="flex h-screen border-l-[1.5px] border-gray-300 dark:border-gray-500">
       <div className="w-1/3 bg-gray-50 dark:bg-slate-900 border-r">
         <ScrollArea className="h-full">
           {otherUsers.map((user) => (

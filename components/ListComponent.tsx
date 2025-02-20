@@ -225,7 +225,7 @@ const ListComponent = () => {
   }
 
   return (
-    <div className="p-6 space-y-6 max-w-5xl mx-auto">
+    <div className="p-6 h-screen space-y-6 max-w-5xl border-l-[1.5px] border-gray-300 dark:border-gray-500">
       <Card className="shadow-lg">
         <CardHeader className="bg-purple-700">
           <CardTitle className="text-white text-2xl">My Tasks</CardTitle>

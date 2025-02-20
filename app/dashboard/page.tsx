@@ -168,10 +168,10 @@ export default function Dashboard() {
 
                 {/* Sidebar */}
                 <div
-                    className={`fixed md:static ${isSidebarOpen ? 'w-64 sm:w-1/4 md:w-1/5' : 'w-0'} z-30 md:z-0 pt-4 transition-all duration-300 h-full bg-zinc-100 dark:bg-slate-950 border-r-[1.5px] border-gray-300 dark:border-gray-500 overflow-hidden`}
+                    className={`fixed md:static ${isSidebarOpen ? 'w-64 sm:w-1/4 md:w-1/5' : 'w-0'} z-30 md:z-0 pt-4 transition-all duration-300 h-screen  dark:bg-slate-950 overflow-hidden`}
                 >
                     {/* Sidebar content */}
-                    <div className="flex flex-col h-full">
+                    <div className="flex flex-col h-screen">
                         <div className="flex gap-1 items-center bg-white dark:bg-gray-900 mx-4 rounded-md border-gray-400 border-[1px]">
                             <CiSearch className="mx-1" />
                             <input
@@ -183,7 +183,7 @@ export default function Dashboard() {
                             />
                         </div>
 
-                        <nav className="my-3 dark:text-white mx-4 text-black/80 flex-1">
+                        <nav className="my-3 dark:text-white mx-4 text-black/80 flex-1 h-screen">
                             <h1 className="font-bold">MENU</h1>
                             {filteredMenuItems.map(({ icon: Icon, name }) => (
                                 <div

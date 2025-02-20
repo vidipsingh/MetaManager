@@ -240,7 +240,7 @@ const CalendarComponent = () => {
   };
 
   return (
-    <div className="p-6">
+    <div className="p-6 border-l-[1.5px] border-gray-300 dark:border-gray-500">
       <Card className="shadow-lg">
         <CardHeader className="bg-purple-700 flex flex-row items-center justify-between">
           <CardTitle className="text-white text-2xl">Calendar</CardTitle>

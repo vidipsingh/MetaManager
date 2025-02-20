@@ -59,7 +59,7 @@ const TeamComponent: React.FC<TeamComponentProps> = ({ onChatSelect }) => {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6 border-l-[1.5px] border-gray-300 dark:border-gray-500">
       {/* Team Overview Section */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>

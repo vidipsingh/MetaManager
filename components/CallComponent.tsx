@@ -443,7 +443,7 @@ const CallComponent = () => {
         </AlertDialogContent>
       </AlertDialog> */}
 
-<div className="flex h-screen">
+<div className="flex h-screen border-l-[1.5px] border-gray-300 dark:border-gray-500">
         <div className="w-1/4 bg-gray-50 dark:bg-slate-900 border-r">
           <div className="h-full">
             <div className="p-4">

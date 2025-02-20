@@ -62,7 +62,10 @@ const config: Config = {
   			lg: 'var(--radius)',
   			md: 'calc(var(--radius) - 2px)',
   			sm: 'calc(var(--radius) - 4px)'
-  		}
+  		},
+		width: {
+			'1/5.1': 'calc(20% + 1px)', // 1/5 + 0.1px
+		},
   	}
   },
   plugins: [

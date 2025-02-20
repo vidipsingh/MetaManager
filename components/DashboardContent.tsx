@@ -112,7 +112,7 @@ const DashboardContent = ({ onTodoClick }: Props) => {
     };
 
     return (
-        <div className="p-6 space-y-6">
+        <div className="p-6 space-y-6 border-l-[1.5px] border-gray-300 dark:border-gray-500">
             {/* Quick Stats Section */}
             <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-4">
                 <Card className="relative overflow-hidden">

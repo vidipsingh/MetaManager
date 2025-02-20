@@ -83,7 +83,7 @@ const Header = ({ onToggleSidebar, onLogout, isMobile }: HeaderProps) => {
 
     return (
         <div className='border-b-[1.5px] flex h-16 justify-between dark:bg-slate-950 dark:border-b-gray-500 border-b-gray-300'>
-            <div className='flex px-4 pt-4 pb-2 md:w-1/5 border-r-[1.5px] border-gray-300 dark:border-gray-500 items-center gap-4 md:gap-20 bg-zinc-200 dark:bg-slate-950'>
+            <div className='flex px-4 pt-4 pb-2 md:w-1/5.1 border-r-[1.5px] border-gray-300 dark:border-gray-500 items-center gap-4 md:gap-20 bg-zinc-200 dark:bg-slate-950'>
                 <div className='flex items-center gap-2'>
                     <Image src={github_dp} width={35} height={35} alt='' className='rounded-full' />
                     <div className='dark:bg-slate-950 hidden sm:block'>
