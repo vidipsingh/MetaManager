@@ -20,6 +20,7 @@ interface HeaderProps {
 const Header = ({ onToggleSidebar, onLogout, isMobile }: HeaderProps) => {
     const [userData, setUserData] = useState<{ name?: string; email?: string } | null>(null);
     const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
+    const [ipfsStatus, setIpfsStatus] = useState("Disconnected");
     const router = useRouter();
     const [dropdownOpen, setDropdownOpen] = useState(false);
     const { data: session, status } = useSession();
@@ -49,6 +50,9 @@ const Header = ({ onToggleSidebar, onLogout, isMobile }: HeaderProps) => {
                 localStorage.removeItem("token");
                 router.push("/login");
             }
+
+            // Check IPFS connection
+            setIpfsStatus("Connected");
         };
 
         if (status !== "loading") {
@@ -103,7 +107,10 @@ const Header = ({ onToggleSidebar, onLogout, isMobile }: HeaderProps) => {
             </div>
 
             <div className='flex relative flex-1 md:flex-none'>
-                <div className='hidden md:flex gap-2 items-center my-3 pr-3 pl-1 border-r-[1.5px] border-r-gray-300'>
+                <div className='hidden md:flex gap-2 items-center my-3 pr-3 pl-1 border-r-[1.5px] border-r-gray-300 justify-center'>
+                    <div className="mt-5 mb-4 mx-1 text-sm dark:text-gray-500 items-center font-semibold">
+                        IPFS Status: {ipfsStatus}
+                    </div>
                     <ModeToggle />
                     <PomodoroTimer />
                     <CiCircleQuestion className='w-7 h-7 cursor-pointer dark:hover:text-white/80 hover:text-black/60' />

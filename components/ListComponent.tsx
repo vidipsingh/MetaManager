@@ -22,7 +22,7 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
 import { CalendarIcon, Plus, Trash2, Edit2 } from 'lucide-react';
-import { useToast } from "@/components/ui/use-toast";
+// import { useToast } from "@/components/ui/use-toast";
 import {
   Dialog,
   DialogContent,
@@ -31,8 +31,8 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { toast } from 'react-hot-toast';
 import HoverableCheckbox from './ui/HoverableCheckbox';
+import { create } from 'ipfs-http-client';
 
 interface Todo {
   id: string;
@@ -50,9 +50,11 @@ interface Project {
   color: string;
 }
 
+const ipfs = create({ url: 'https://ipfs.infura.io:5001' });
+
 const ListComponent = () => {
   const { data: session, status } = useSession();
-  const toast = useToast(); // Changed this line
+  // const { toast } = useToast();
   const [todos, setTodos] = useState<Todo[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [newTodo, setNewTodo] = useState({
@@ -65,6 +67,7 @@ const ListComponent = () => {
   const [editingTodo, setEditingTodo] = useState<Todo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [ipfsCid, setIpfsCid] = useState<string | null>(null);
 
   useEffect(() => {
     if (status === 'authenticated') {
@@ -79,12 +82,11 @@ const ListComponent = () => {
       if (!response.ok) throw new Error('Failed to fetch todos');
       const data = await response.json();
       setTodos(data);
+      
+      const cid = await ipfs.add(JSON.stringify(data));
+      setIpfsCid(cid.path);
+      console.log("IPFS CID:", cid.path);
     } catch (error) {
-      toast.addToast({ // Corrected line
-        title: "Error",
-        description: "Failed to fetch todos",
-        variant: "destructive",
-      });
     } finally {
       setIsLoading(false);
     }
@@ -98,16 +100,12 @@ const ListComponent = () => {
       setProjects(data);
     } catch (error) {
       console.error('Error:', error);
-      // toast.error('Failed to fetch projects');
     }
   };
 
   const handleAddTodo = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newTodo.title.trim()) {
-      // toast.error('Title is required');
-      return;
-    }
+    if (!newTodo.title.trim()) return;
     
     try {
       const response = await fetch('/api/todos', {
@@ -119,7 +117,12 @@ const ListComponent = () => {
       if (!response.ok) throw new Error('Failed to add todo');
       
       const todo = await response.json();
-      setTodos([todo, ...todos]);
+      const updatedTodos = [todo, ...todos];
+      setTodos(updatedTodos);
+      
+      const cid = await ipfs.add(JSON.stringify(updatedTodos));
+      setIpfsCid(cid.path);
+      
       setNewTodo({
         title: '',
         description: '',
@@ -128,9 +131,8 @@ const ListComponent = () => {
         projectId: undefined,
       });
       
-      // toast.success('Todo added successfully');
+
     } catch (error) {
-      // toast.error('Failed to add todo');
     }
   };
 
@@ -145,13 +147,17 @@ const ListComponent = () => {
       if (!response.ok) throw new Error('Failed to update todo');
 
       const updatedTodo = await response.json();
-      setTodos(todos.map(t => t.id === updatedTodo.id ? updatedTodo : t));
+      const updatedTodos = todos.map(t => t.id === updatedTodo.id ? updatedTodo : t);
+      setTodos(updatedTodos);
+      
+      const cid = await ipfs.add(JSON.stringify(updatedTodos));
+      setIpfsCid(cid.path);
+      console.log("Updated IPFS CID:", cid.path);
+      
       setEditingTodo(null);
       setIsDialogOpen(false);
-      
-      // toast.success('Todo updated successfully');
+
     } catch (error) {
-      // toast.error('Failed to update todo');
     }
   };
 
@@ -163,22 +169,22 @@ const ListComponent = () => {
 
       if (!response.ok) throw new Error('Failed to delete todo');
       
-      setTodos(todos.filter(todo => todo.id !== id));
+      const updatedTodos = todos.filter(todo => todo.id !== id);
+      setTodos(updatedTodos);
       
-      // toast.success('Todo deleted successfully');
+      const cid = await ipfs.add(JSON.stringify(updatedTodos));
+      setIpfsCid(cid.path);
+      console.log("Deleted IPFS CID:", cid.path);
+
     } catch (error) {
-      // toast.error('Failed to delete todo');
     }
   };
 
   const handleToggleComplete = async (todo: Todo) => {
     try {
       const updatedTodo = { ...todo, completed: !todo.completed };
-      
-      // Optimistically update UI
       setTodos(todos.map(t => t.id === todo.id ? updatedTodo : t));
       
-      // Add delay before deletion if completed
       if (!todo.completed) {
         setTimeout(() => {
           handleDeleteTodo(todo.id);
@@ -187,9 +193,7 @@ const ListComponent = () => {
       
       await handleUpdateTodo(updatedTodo);
     } catch (error) {
-      // Revert optimistic update on error
-      setTodos(todos.map(t => t.id === todo.id ? todo : t));
-      // toast.error('Failed to update todo');
+      setTodos(todos.map(t => t.id === todo.id ? t : t));
     }
   };
 
@@ -228,10 +232,16 @@ const ListComponent = () => {
     <div className="p-6 h-screen space-y-6 max-w-5xl border-l-[1.5px] border-gray-300 dark:border-gray-500">
       <Card className="shadow-lg">
         <CardHeader className="bg-purple-700">
-          <CardTitle className="text-white text-2xl">My Tasks</CardTitle>
+          <CardTitle className="text-white text-2xl flex justify-between items-center">
+            <span>My Tasks</span>
+            {ipfsCid && (
+              <span className="text-sm break-all">
+                IPFS: {ipfsCid}
+              </span>
+            )}
+          </CardTitle>
         </CardHeader>
         <CardContent className="p-6">
-          {/* Add Todo Form */}
           <form onSubmit={handleAddTodo} className="space-y-4 mb-6">
             <div className="flex flex-col md:flex-row gap-4">
               <Input
@@ -244,7 +254,6 @@ const ListComponent = () => {
                 <Select
                   value={newTodo.priority}
                   onValueChange={(value) => setNewTodo({ ...newTodo, priority: value as Todo['priority'] })}
-                  // className="dark:hover:bg-gray-300"
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Priority" />
@@ -257,22 +266,22 @@ const ListComponent = () => {
                   </SelectContent>
                 </Select>
               </div>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button variant="outline" className="w-[200px]">
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {newTodo.dueDate ? format(newTodo.dueDate, 'PPP') : 'Pick a date'}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={newTodo.dueDate}
-                        onSelect={(date) => setNewTodo({ ...newTodo, dueDate: date })}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="w-[200px]">
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {newTodo.dueDate ? format(newTodo.dueDate, 'PPP') : 'Pick a date'}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={newTodo.dueDate}
+                    onSelect={(date) => setNewTodo({ ...newTodo, dueDate: date })}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
               <Button type="submit" className="bg-gradient-to-r from-purple-600 to-blue-600 hover:opacity-90 text-white">
                 <Plus className="h-4 w-4 mr-2" />
                 Add Task
@@ -280,16 +289,12 @@ const ListComponent = () => {
             </div>
           </form>
 
-          {/* Todo List */}
           <div className="space-y-3">
             {todos.map((todo) => (
-              <div
-                key={todo.id}
-                className={cn(
-                  "flex items-center gap-4 p-4 rounded-lg border-2 hover:shadow-md transition-all duration-200",
-                  todo.completed ? "bg-gray-400 dark:bg-gray-800" : "bg-white dark:bg-zinc-300"
-                )}
-              >
+              <div key={todo.id} className={cn(
+                "flex items-center gap-4 p-4 rounded-lg border-2 hover:shadow-md transition-all duration-200",
+                todo.completed ? "bg-gray-400 dark:bg-gray-800" : "bg-white dark:bg-zinc-300"
+              )}>
                 <HoverableCheckbox
                   checked={todo.completed}
                   onCheckedChange={() => handleToggleComplete(todo)}
@@ -339,7 +344,6 @@ const ListComponent = () => {
         </CardContent>
       </Card>
 
-      {/* Edit Todo Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
@@ -374,8 +378,8 @@ const ListComponent = () => {
             </div>
           )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDialogOpen(false)} className='dark:hover:text-white/80'>Cancel</Button>
-            <Button onClick={() => editingTodo && handleUpdateTodo(editingTodo)} className=' dark:text-white dark:hover:text-white/80'>Save changes</Button>
+            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
+            <Button onClick={() => editingTodo && handleUpdateTodo(editingTodo)}>Save changes</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
