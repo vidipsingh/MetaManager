@@ -1,4 +1,3 @@
-// app/api/messages/route.ts
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getToken } from 'next-auth/jwt';
@@ -11,22 +10,23 @@ export async function POST(req: Request) {
     }
 
     const messageData = await req.json();
+    const { content, senderId, receiverId, conversationId } = messageData;
 
     const message = await prisma.message.create({
       data: {
-        content: messageData.content,
-        senderId: messageData.senderId,
-        receiverId: messageData.receiverId,
-        conversationId: messageData.conversationId,
+        content,
+        senderId,
+        receiverId,
+        conversationId,
+      },
+      include: {
+        sender: true,
       },
     });
 
     return NextResponse.json(message);
   } catch (error) {
     console.error('Error in messages API:', error);
-    return NextResponse.json(
-      { error: 'Failed to send message' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to send message' }, { status: 500 });
   }
 }

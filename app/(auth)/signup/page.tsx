@@ -1,8 +1,8 @@
-"use client"
+"use client";
 
-import React, { useEffect, useState } from 'react'
-import Header from '@/components/Home/Header'
-import Link from 'next/link'
+import React, { useEffect, useState } from 'react';
+import Header from '@/components/Home/Header';
+import Link from 'next/link';
 import Image from 'next/image';
 import Google from "../../../public/images/google_logo.png";
 import { signIn } from "next-auth/react";
@@ -10,6 +10,8 @@ import { AiFillEye, AiFillEyeInvisible } from 'react-icons/ai';
 import Alert from '@mui/material/Alert';
 import { useRouter } from "next/navigation";
 import { BackgroundBeams } from '@/components/ui/background-beams';
+import { ethers } from 'ethers';
+import Etheruem from "../../../public/images/etheruem.png";
 
 const SignUp = () => {
   const [email, setEmail] = useState("");
@@ -39,7 +41,6 @@ const SignUp = () => {
       setAlertSeverity(data.message ? 'success' : 'error');
       setShowAlert(true);
 
-      // If user creation is successful, wait for 1.5 seconds before redirecting to /dashboard
       if (data.message) {
         setTimeout(() => {
           router.push("/dashboard");
@@ -52,7 +53,6 @@ const SignUp = () => {
     }
   };
 
-  // Google Sign-in functionality, similar to login page
   const handleGoogleSignUp = async () => {
     try {
       const result = await signIn("google", {
@@ -61,6 +61,60 @@ const SignUp = () => {
       });
     } catch (error) {
       setMessage("An error occurred during Google sign-up");
+      setAlertSeverity('error');
+      setShowAlert(true);
+    }
+  };
+
+  const handleEthereumSignUp = async () => {
+    try {
+      if (!window.ethereum) {
+        setMessage("Please install MetaMask or another Ethereum wallet");
+        setAlertSeverity('error');
+        setShowAlert(true);
+        return;
+      }
+
+      console.log("ethers version:", ethers.version);
+      console.log("Attempting to connect to wallet...");
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const accounts = await provider.send("eth_requestAccounts", []);
+      console.log("Accounts:", accounts);
+      const signer = await provider.getSigner();
+      const address = await signer.getAddress();
+      console.log("Address:", address);
+      const ensName = await provider.resolveName(address) || address;
+      console.log("ENS or Address:", ensName);
+
+      // Fetch CSRF token
+      const csrfResponse = await fetch('/api/auth/csrf');
+      const { csrfToken } = await csrfResponse.json();
+      console.log("CSRF Token:", csrfToken);
+
+      const result = await signIn("ethereum", {
+        address,
+        csrfToken, // Include CSRF token
+        redirect: false,
+        callbackUrl: "/dashboard",
+      });
+
+      console.log("SignIn Result:", result);
+
+      if (!result?.error) {
+        setMessage(`Signed up with ${ensName}`);
+        setAlertSeverity('success');
+        setShowAlert(true);
+        setTimeout(() => {
+          router.push("/dashboard");
+        }, 1000);
+      } else {
+        setMessage(result.error || "Failed to sign up with Ethereum");
+        setAlertSeverity('error');
+        setShowAlert(true);
+      }
+    } catch (error) {
+      console.error("Wallet connection error:", error);
+      setMessage("Failed to connect wallet - check console for details");
       setAlertSeverity('error');
       setShowAlert(true);
     }
@@ -147,7 +201,7 @@ const SignUp = () => {
                     className="absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer text-white/80"
                     onClick={togglePasswordVisibility}
                   >
-                    {showPassword ? <AiFillEyeInvisible size={24}  className='mt-6 text-gray-600 dark:text-gray-400'/> : <AiFillEye size={24} className='mt-6 text-gray-600 dark:text-gray-400' />}
+                    {showPassword ? <AiFillEyeInvisible size={24} className='mt-6 text-gray-600 dark:text-gray-400'/> : <AiFillEye size={24} className='mt-6 text-gray-600 dark:text-gray-400' />}
                   </div>
                 </div>
                 
@@ -164,10 +218,20 @@ const SignUp = () => {
               <div className='w-full flex justify-center items-center'>
                 <button 
                   onClick={handleGoogleSignUp} 
-                  className='w-full py-2 border border-gray-400 rounded-md flex justify-center items-center gap-1 text-black dark:text-white hover:text-white hover:bg-black  dark:hover:bg-gray-900'
+                  className='w-full py-2 border border-gray-400 rounded-md flex justify-center items-center gap-1 text-black dark:text-white hover:text-white hover:bg-black dark:hover:bg-gray-900'
                 >
                   <Image src={Google} width={30} height={30} alt='Google logo' className='rounded-full' />
                   Sign Up With Google
+                </button>
+              </div>
+
+              <div className='w-full flex justify-center items-center mt-4'>
+                <button 
+                  onClick={handleEthereumSignUp}
+                  className='w-full py-2 border border-gray-400 rounded-md flex justify-center items-center gap-2 text-black dark:text-white hover:text-white hover:bg-black dark:hover:bg-gray-900'
+                >
+                  <Image src={Etheruem}width={30} height={30} alt='' />
+                  Sign Up with Ethereum
                 </button>
               </div>
             </div>
@@ -176,6 +240,6 @@ const SignUp = () => {
       </div>
     </div>
   );
-}
+};
 
 export default SignUp;

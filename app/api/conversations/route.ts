@@ -25,13 +25,17 @@ export async function POST(req: Request) {
       );
     }
 
-    // Check if conversation exists
+    // Check if a conversation exists by looking at messages between these users
     let conversation = await prisma.conversation.findFirst({
       where: {
-        AND: [
-          { users: { some: { id: userId } } },
-          { users: { some: { id: receiverId } } },
-        ],
+        messages: {
+          some: {
+            OR: [
+              { senderId: userId, receiverId: receiverId },
+              { senderId: receiverId, receiverId: userId },
+            ],
+          },
+        },
       },
       include: {
         messages: {
@@ -50,11 +54,9 @@ export async function POST(req: Request) {
       try {
         conversation = await prisma.conversation.create({
           data: {
-            users: {
-              connect: [
-                { id: userId },
-                { id: receiverId }
-              ],
+            // No users relation needed; we'll rely on messages to link users
+            messages: {
+              create: [], // Optionally create an initial empty message if needed
             },
           },
           include: {

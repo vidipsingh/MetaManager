@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import React, { useEffect, useRef, useState } from 'react';
 import { useSession } from 'next-auth/react';
@@ -29,7 +29,7 @@ interface ChatComponentProps {
   initialSelectedUserId?: string;
 }
 
-const ChatComponent: FC<ChatComponentProps> = ({ initialSelectedUserId }) => {
+const ChatComponent: React.FC<ChatComponentProps> = ({ initialSelectedUserId }) => {
   const { data: session, status } = useSession();
   const [socket, setSocket] = useState<Socket | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -153,8 +153,12 @@ const ChatComponent: FC<ChatComponentProps> = ({ initialSelectedUserId }) => {
       });
 
       if (response.ok) {
+        // Add the sent message to local state immediately
+        setMessages(prev => [...prev, messageData]);
         socket?.emit('send-message', messageData);
         setNewMessage('');
+      } else {
+        console.error("Failed to send message:", await response.text());
       }
     } catch (error) {
       console.error("Error sending message:", error);
@@ -193,7 +197,7 @@ const ChatComponent: FC<ChatComponentProps> = ({ initialSelectedUserId }) => {
       <Card className="flex-1 flex flex-col">
         <CardContent className="flex-1 flex flex-col p-4 h-full">
           <ScrollArea className="flex-1 h-[calc(100vh-12rem)]">
-          <div className="space-y-4 min-h-full">
+            <div className="space-y-4 min-h-full">
               {messages.map((message) => {
                 const isCurrentUser = message.senderId === session?.user?.id;
                 const user = allUsers.find(u => u.id === message.senderId);
@@ -240,7 +244,7 @@ const ChatComponent: FC<ChatComponentProps> = ({ initialSelectedUserId }) => {
               className="flex-grow"
               disabled={!selectedUserId}
             />
-            <Button type="submit" disabled={!selectedUserId}>
+            <Button type="submit" className="flex-shrink-0" disabled={!selectedUserId}>
               Send
             </Button>
           </form>

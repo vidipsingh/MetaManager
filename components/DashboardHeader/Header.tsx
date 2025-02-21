@@ -15,10 +15,11 @@ interface HeaderProps {
     onToggleSidebar: () => void;
     onLogout: () => void;
     isMobile: boolean;
+    userName?: string;
 }
 
-const Header = ({ onToggleSidebar, onLogout, isMobile }: HeaderProps) => {
-    const [userData, setUserData] = useState<{ name?: string; email?: string } | null>(null);
+const Header = ({ onToggleSidebar, onLogout, isMobile, userName }: HeaderProps) => {
+    const [userData, setUserData] = useState<{ name?: string; email?: string; ethAddress?: string } | null>(null);
     const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
     const [ipfsStatus, setIpfsStatus] = useState("Disconnected");
     const router = useRouter();
@@ -42,6 +43,7 @@ const Header = ({ onToggleSidebar, onLogout, isMobile }: HeaderProps) => {
                 if (res.ok) {
                     const data = await res.json();
                     setUserData(data);
+                    console.log("Header user data:", data); // Debug log
                 } else {
                     localStorage.removeItem("token");
                 }
@@ -51,7 +53,6 @@ const Header = ({ onToggleSidebar, onLogout, isMobile }: HeaderProps) => {
                 router.push("/login");
             }
 
-            // Check IPFS connection
             setIpfsStatus("Connected");
         };
 
@@ -84,6 +85,9 @@ const Header = ({ onToggleSidebar, onLogout, isMobile }: HeaderProps) => {
     if (!userData) {
         return null;
     }
+
+    // Use userName prop if provided, otherwise compute from userData
+    const displayName = userName || userData.name || (userData.ethAddress ? userData.ethAddress.slice(0, 6) + "..." + userData.ethAddress.slice(-4) : userData.email);
 
     return (
         <div className='border-b-[1.5px] flex h-16 justify-between dark:bg-slate-950 dark:border-b-gray-500 border-b-gray-300'>
@@ -123,7 +127,7 @@ const Header = ({ onToggleSidebar, onLogout, isMobile }: HeaderProps) => {
                 <div className='profile-dropdown relative flex items-center px-2 mx-0.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 gap-2 cursor-pointer ml-auto' onClick={toggleDropdown}>
                     <Image src={github_dp} width={30} height={30} alt='' className='rounded-full' />
                     <div className='text-sm hidden sm:block'>
-                        <h1 className="font-semibold">{userData.name || userData.email}</h1>
+                        <h1 className="font-semibold">{displayName}</h1>
                         <h1 className='text-gray-600 dark:text-white/70'>Creative Studio</h1>
                     </div>
 

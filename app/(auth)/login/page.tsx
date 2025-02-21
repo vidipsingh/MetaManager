@@ -1,17 +1,18 @@
-// app/(auth)/login/page.tsx
-"use client"
+"use client";
 
-import Header from '@/components/Home/Header'
-import React, { useEffect, useState } from 'react'
-import Link from 'next/link'
-import Image from 'next/image'
-import Google from "../../../public/images/google_logo.png"
-import { AiFillEye, AiFillEyeInvisible } from 'react-icons/ai'
-import { signIn, useSession } from "next-auth/react"
-import Alert from '@mui/material/Alert'
-import { useRouter, useSearchParams } from 'next/navigation'
-import LoadingSpinner from '@/components/ui/loading-spinner'
-import { BackgroundBeams } from '@/components/ui/background-beams'
+import Header from '@/components/Home/Header';
+import React, { useEffect, useState } from 'react';
+import Link from 'next/link';
+import Image from 'next/image';
+import Google from "../../../public/images/google_logo.png";
+import { AiFillEye, AiFillEyeInvisible } from 'react-icons/ai';
+import { signIn, useSession } from "next-auth/react";
+import Alert from '@mui/material/Alert';
+import { useRouter, useSearchParams } from 'next/navigation';
+import LoadingSpinner from '@/components/ui/loading-spinner';
+import { BackgroundBeams } from '@/components/ui/background-beams';
+import { ethers } from 'ethers';
+import Etheruem from "../../../public/images/etheruem.png";
 
 interface LoginResponse {
   token?: string;
@@ -19,51 +20,50 @@ interface LoginResponse {
 }
 
 const Login = () => {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [showPassword, setShowPassword] = useState(false)
-  const [message, setMessage] = useState("")
-  const [showAlert, setShowAlert] = useState(false)
-  const [alertSeverity, setAlertSeverity] = useState<'success' | 'error' | 'info'>('info')
-  const [isLoading, setIsLoading] = useState(false)
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [message, setMessage] = useState("");
+  const [showAlert, setShowAlert] = useState(false);
+  const [alertSeverity, setAlertSeverity] = useState<'success' | 'error' | 'info'>('info');
+  const [isLoading, setIsLoading] = useState(false);
   
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const { data: session, status } = useSession()
-  const callbackUrl = searchParams.get('from') || '/dashboard'
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const { data: session, status } = useSession();
+  const callbackUrl = searchParams.get('from') || '/dashboard';
 
   useEffect(() => {
     if (session && status === 'authenticated') {
-      router.push(callbackUrl)
+      router.push(callbackUrl);
     }
-  }, [session, status, router, callbackUrl])
+  }, [session, status, router, callbackUrl]);
 
   useEffect(() => {
-    const error = searchParams.get('error')
+    const error = searchParams.get('error');
     if (error) {
-      setMessage(decodeURIComponent(error))
-      setAlertSeverity('error')
-      setShowAlert(true)
+      setMessage(decodeURIComponent(error));
+      setAlertSeverity('error');
+      setShowAlert(true);
     }
-  }, [searchParams])
+  }, [searchParams]);
 
   useEffect(() => {
     if (showAlert) {
       const timer = setTimeout(() => {
-        setShowAlert(false)
-      }, 3000)
-
-      return () => clearTimeout(timer)
+        setShowAlert(false);
+      }, 3000);
+      return () => clearTimeout(timer);
     }
-  }, [showAlert])
+  }, [showAlert]);
 
   const togglePasswordVisibility = () => {
-    setShowPassword(!showPassword)
-  }
+    setShowPassword(!showPassword);
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
+    e.preventDefault();
+    setIsLoading(true);
     
     try {
       const result = await signIn('credentials', {
@@ -71,51 +71,110 @@ const Login = () => {
         password,
         redirect: false,
         callbackUrl,
-      })
+      });
 
       if (!result?.error) {
-        setMessage("Login successful!")
-        setAlertSeverity('success')
-        setShowAlert(true)
+        setMessage("Login successful!");
+        setAlertSeverity('success');
+        setShowAlert(true);
         
         setTimeout(() => {
-          router.push(callbackUrl)
-          router.refresh()
-        }, 1000)
+          router.push(callbackUrl);
+          router.refresh();
+        }, 1000);
       } else {
-        setMessage(result.error)
-        setAlertSeverity('error')
-        setShowAlert(true)
+        setMessage(result.error);
+        setAlertSeverity('error');
+        setShowAlert(true);
       }
     } catch (error) {
-      setMessage("An error occurred during login")
-      setAlertSeverity('error')
-      setShowAlert(true)
+      setMessage("An error occurred during login");
+      setAlertSeverity('error');
+      setShowAlert(true);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const handleGoogleSignIn = async () => {
-    setIsLoading(true)
+    setIsLoading(true);
     try {
       await signIn("google", {
         callbackUrl,
-      })
+      });
     } catch (error) {
-      setMessage("An error occurred during Google sign in")
-      setAlertSeverity('error')
-      setShowAlert(true)
-      setIsLoading(false)
+      setMessage("An error occurred during Google sign in");
+      setAlertSeverity('error');
+      setShowAlert(true);
+      setIsLoading(false);
     }
-  }
+  };
+
+  const handleEthereumSignIn = async () => {
+    setIsLoading(true);
+    try {
+      if (!window.ethereum) {
+        setMessage("Please install MetaMask or another Ethereum wallet");
+        setAlertSeverity('error');
+        setShowAlert(true);
+        setIsLoading(false);
+        return;
+      }
+
+      console.log("ethers version:", ethers.version);
+      console.log("Attempting to connect to wallet...");
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const accounts = await provider.send("eth_requestAccounts", []);
+      console.log("Accounts:", accounts);
+      const signer = await provider.getSigner();
+      const address = await signer.getAddress();
+      console.log("Address:", address);
+      const ensName = await provider.resolveName(address) || address;
+      console.log("ENS or Address:", ensName);
+
+      // Fetch CSRF token
+      const csrfResponse = await fetch('/api/auth/csrf');
+      const { csrfToken } = await csrfResponse.json();
+      console.log("CSRF Token:", csrfToken);
+
+      const result = await signIn("ethereum", {
+        address,
+        csrfToken, // Include CSRF token
+        redirect: false,
+        callbackUrl,
+      });
+
+      console.log("SignIn Result:", result);
+
+      if (!result?.error) {
+        setMessage(`Logged in with ${ensName}`);
+        setAlertSeverity('success');
+        setShowAlert(true);
+        setTimeout(() => {
+          router.push(callbackUrl);
+          router.refresh();
+        }, 1000);
+      } else {
+        setMessage(result.error);
+        setAlertSeverity('error');
+        setShowAlert(true);
+      }
+    } catch (error) {
+      console.error("Wallet connection error:", error);
+      setMessage("Failed to connect wallet - check console for details");
+      setAlertSeverity('error');
+      setShowAlert(true);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   if (status === 'loading') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-black/95">
         <LoadingSpinner size="lg" />
       </div>
-    )
+    );
   }
 
   return (
@@ -143,7 +202,7 @@ const Login = () => {
               <div>
                 <h1 className='text-5xl font-semibold dark:text-white text-black'>Login</h1>
                 <h1 className='my-3 dark:text-white text-black'>
-                  Don&apos;t have an account? 
+                  Don't have an account? 
                   <Link href="/signup"> 
                     <span className='dark:text-purple-300 text-purple-800 hover:text-purple-950 underline dark:hover:text-purple-400 cursor-pointer ml-1'>
                       Sign Up
@@ -220,12 +279,23 @@ const Login = () => {
                   Sign in with Google
                 </button>
               </div>
+
+              <div className='w-full flex justify-center items-center mt-4'>
+                <button 
+                  onClick={handleEthereumSignIn}
+                  disabled={isLoading}
+                  className='w-full py-2 border border-gray-400 rounded-md flex justify-center items-center gap-2 text-black dark:text-white hover:text-white hover:bg-black dark:hover:bg-gray-900 disabled:opacity-50 disabled:cursor-not-allowed text-base'
+                >
+                  <Image src={Etheruem}width={30} height={30} alt='' />
+                  Sign in with Ethereum
+                </button>
+              </div>
             </div>
           </div>
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default Login
+export default Login;

@@ -4,6 +4,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "@/lib/prisma";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
+import { ethers } from "ethers";
 
 export const authOptions: AuthOptions = {
   providers: [
@@ -18,6 +19,7 @@ export const authOptions: AuthOptions = {
         password: { label: "Password", type: "password" }
       },
       async authorize(credentials) {
+        console.log("Email/Password authorize called with:", credentials);
         if (!credentials?.email || !credentials?.password) {
           throw new Error("Invalid credentials");
         }
@@ -45,6 +47,47 @@ export const authOptions: AuthOptions = {
           name: user.name
         };
       }
+    }),
+    CredentialsProvider({
+      id: "ethereum",
+      name: "Ethereum",
+      credentials: {
+        address: { label: "Ethereum Address", type: "text" }
+      },
+      async authorize(credentials) {
+        console.log("Ethereum authorize called with:", credentials);
+        if (!credentials?.address) {
+          console.log("No address provided");
+          throw new Error("No wallet address provided");
+        }
+
+        const address = ethers.getAddress(credentials.address); // Normalize address
+        console.log("Normalized address:", address);
+
+        let user = await prisma.user.findFirst({
+          where: { ethAddress: address }
+        });
+
+        if (!user) {
+          console.log("Creating new user for address:", address);
+          user = await prisma.user.create({
+            data: {
+              email: `${address}@metamanager.eth`,
+              name: address.slice(0, 6) + "..." + address.slice(-4),
+              ethAddress: address,
+            }
+          });
+        } else {
+          console.log("Found existing user:", user);
+        }
+
+        return {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          ethAddress: address
+        };
+      }
     })
   ],
   pages: {
@@ -54,15 +97,14 @@ export const authOptions: AuthOptions = {
   },
   callbacks: {
     async signIn({ user, account }) {
+      console.log("signIn callback:", { user, account });
       if (account?.provider === "google") {
         try {
-          // Check if user exists
           const existingUser = await prisma.user.findUnique({
             where: { email: user.email! }
           });
 
           if (!existingUser) {
-            // Create new user if doesn't exist
             const newUser = await prisma.user.create({
               data: {
                 email: user.email!,
@@ -78,12 +120,15 @@ export const authOptions: AuthOptions = {
           console.error("Error in signIn callback:", error);
           return false;
         }
+      } else if (account?.provider === "ethereum") {
+        user.ethAddress = account.providerAccountId;
       }
       return true;
     },
     async jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = user.id;
+        token.ethAddress = user.ethAddress;
       }
       
       if (trigger === "update" && session) {
@@ -95,11 +140,13 @@ export const authOptions: AuthOptions = {
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.id;
+        session.user.ethAddress = token.ethAddress;
         
         const customToken = jwt.sign(
           { 
             userId: token.id,
-            email: session.user.email 
+            email: session.user.email,
+            ethAddress: token.ethAddress
           },
           process.env.JWT_SECRET!,
           { expiresIn: "24h" }
@@ -110,7 +157,7 @@ export const authOptions: AuthOptions = {
       return session;
     }
   },
-  debug: false,
+  debug: true, // Enable debug mode for more logs
 };
 
 const handler = NextAuth(authOptions);

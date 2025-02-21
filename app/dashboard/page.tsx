@@ -18,7 +18,7 @@ import CalendarComponent from "@/components/CalendarComponent";
 
 export default function Dashboard() {
   const [isLoading, setIsLoading] = useState(true);
-  const [userData, setUserData] = useState<{ name?: string; email?: string } | null>(null);
+  const [userData, setUserData] = useState<{ name?: string; email?: string; ethAddress?: string } | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [activeSection, setActiveSection] = useState("Dashboard");
   const [selectedChatUserId, setSelectedChatUserId] = useState<string | null>(null);
@@ -78,7 +78,11 @@ export default function Dashboard() {
         });
         if (res.ok) {
           const data = await res.json();
-          setUserData(data);
+          setUserData({
+            ...data,
+            ethAddress: session?.user?.ethAddress
+          });
+          console.log("Dashboard user data:", data);
           setIsLoading(false);
         } else {
           localStorage.removeItem("token");
@@ -155,14 +159,17 @@ export default function Dashboard() {
     return null;
   }
 
+  // Shorten ethAddress if no name is provided
+  const displayName = userData.name || (userData.ethAddress ? userData.ethAddress.slice(0, 6) + "..." + userData.ethAddress.slice(-4) : userData.email);
+
   return (
     <div className="min-h-screen dark:bg-slate-950">
       <Header 
         onToggleSidebar={toggleSidebar} 
         onLogout={handleLogout} 
         isMobile={isMobile}
+        userName={displayName}
       />
-
       <div className="flex relative">
         {isMobile && isSidebarOpen && (
           <div 
@@ -222,4 +229,4 @@ export default function Dashboard() {
       </div>
     </div>
   );
-}
+};

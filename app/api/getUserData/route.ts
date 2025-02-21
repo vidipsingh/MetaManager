@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import jwt from "jsonwebtoken";
 import { getToken } from "next-auth/jwt";
 
-export async function GET(req: NextRequest) { // Change the type to NextRequest
+export async function GET(req: NextRequest) {
   try {
     const authHeader = req.headers.get("authorization");
 
@@ -18,25 +18,18 @@ export async function GET(req: NextRequest) { // Change the type to NextRequest
     let userData;
 
     try {
-      // First try to verify as JWT token
-      const decoded = jwt.verify(
-        token,
-        process.env.JWT_SECRET as string
-      ) as {
-        email: string;
-      };
-      
+      const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as { email: string };
       userData = await prisma.user.findUnique({
         where: { email: decoded.email },
         select: {
           id: true,
           name: true,
           email: true,
+          ethAddress: true, // Include ethAddress
         },
       });
     } catch (jwtError) {
-      // If JWT verification fails, try to get session token
-      const session = await getToken({ req }); // Use the correct request type
+      const session = await getToken({ req });
       if (session?.email) {
         userData = await prisma.user.findUnique({
           where: { email: session.email as string },
@@ -44,6 +37,7 @@ export async function GET(req: NextRequest) { // Change the type to NextRequest
             id: true,
             name: true,
             email: true,
+            ethAddress: true, // Include ethAddress
           },
         });
       }
@@ -56,6 +50,7 @@ export async function GET(req: NextRequest) { // Change the type to NextRequest
       );
     }
 
+    console.log("getUserData returning:", userData);
     return NextResponse.json(userData);
   } catch (error) {
     console.error("Error in getUserData:", error);
