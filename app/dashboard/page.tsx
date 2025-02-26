@@ -18,13 +18,18 @@ import CalendarComponent from "@/components/CalendarComponent";
 
 export default function Dashboard() {
   const [isLoading, setIsLoading] = useState(true);
-  const [userData, setUserData] = useState<{ name?: string; email?: string; ethAddress?: string } | null>(null);
+  const [userData, setUserData] = useState<{
+    name?: string;
+    email?: string;
+    ethAddress?: string;
+    organization?: { name: string };
+  } | null>(null);
+  const [teamMembersCount, setTeamMembersCount] = useState(0);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [activeSection, setActiveSection] = useState("Dashboard");
   const [selectedChatUserId, setSelectedChatUserId] = useState<string | null>(null);
   const [isMobile, setIsMobile] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  
   const router = useRouter();
   const { data: session, status } = useSession();
 
@@ -37,7 +42,7 @@ export default function Dashboard() {
     { icon: TbCheckbox, name: "To Do List" },
   ];
 
-  const filteredMenuItems = menuItems.filter(item =>
+  const filteredMenuItems = menuItems.filter((item) =>
     item.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -52,9 +57,9 @@ export default function Dashboard() {
     };
 
     handleResize();
-    window.addEventListener('resize', handleResize);
-    
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
+
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   useEffect(() => {
@@ -80,10 +85,32 @@ export default function Dashboard() {
           const data = await res.json();
           setUserData({
             ...data,
-            ethAddress: session?.user?.ethAddress
+            ethAddress: session?.user?.ethAddress,
+            organization: data.organization,
           });
           console.log("Dashboard user data:", data);
+
+          // Fetch team members count
+          const usersRes = await fetch("/api/getAllUsers", {
+            headers: {
+              Authorization: `Bearer ${token || session?.customToken}`,
+            },
+          });
+          if (usersRes.ok) {
+            const allUsers = await usersRes.json();
+            const filteredUsers = allUsers.filter(
+              (user: any) =>
+                user.id !== session?.user?.id &&
+                user.organizationId === session?.user?.organizationId
+            );
+            setTeamMembersCount(filteredUsers.length);
+            console.log("Team members count:", filteredUsers.length);
+          }
+
           setIsLoading(false);
+          if (!data.organization) {
+            router.push("/select-org");
+          }
         } else {
           localStorage.removeItem("token");
           router.push("/login");
@@ -126,9 +153,14 @@ export default function Dashboard() {
 
     switch (activeSection) {
       case "Dashboard":
-        return <DashboardContent onTodoClick={() => setActiveSection("To Do List")} />;
+        return (
+          <DashboardContent
+            onTodoClick={() => setActiveSection("To Do List")}
+            teamMembersCount={teamMembersCount}
+          />
+        );
       case "Chat":
-        return <ChatComponent initialSelectedUserId={selectedChatUserId || ''} />;
+        return <ChatComponent initialSelectedUserId={selectedChatUserId || ""} />;
       case "Team":
         return <TeamComponent onChatSelect={handleChatSelect} />;
       case "Calendar":
@@ -142,7 +174,12 @@ export default function Dashboard() {
       case "To Do List":
         return <ListComponent />;
       default:
-        return <DashboardContent onTodoClick={() => setActiveSection("To Do List")} />;
+        return (
+          <DashboardContent
+            onTodoClick={() => setActiveSection("To Do List")}
+            teamMembersCount={teamMembersCount}
+          />
+        );
     }
   };
 
@@ -159,27 +196,33 @@ export default function Dashboard() {
     return null;
   }
 
-  // Shorten ethAddress if no name is provided
-  const displayName = userData.name || (userData.ethAddress ? userData.ethAddress.slice(0, 6) + "..." + userData.ethAddress.slice(-4) : userData.email);
+  const displayName =
+    userData.name ||
+    (userData.ethAddress
+      ? userData.ethAddress.slice(0, 6) + "..." + userData.ethAddress.slice(-4)
+      : userData.email);
 
   return (
     <div className="min-h-screen dark:bg-slate-950">
-      <Header 
-        onToggleSidebar={toggleSidebar} 
-        onLogout={handleLogout} 
+      <Header
+        onToggleSidebar={toggleSidebar}
+        onLogout={handleLogout}
         isMobile={isMobile}
         userName={displayName}
+        orgName={userData.organization?.name}
       />
       <div className="flex relative">
         {isMobile && isSidebarOpen && (
-          <div 
+          <div
             className="fixed inset-0 bg-black/50 z-20"
             onClick={() => setIsSidebarOpen(false)}
           />
         )}
 
         <div
-          className={`fixed md:static ${isSidebarOpen ? 'w-64 sm:w-1/4 md:w-1/5' : 'w-0'} z-30 md:z-0 pt-4 transition-all duration-300 h-screen dark:bg-slate-950 overflow-hidden`}
+          className={`fixed md:static ${
+            isSidebarOpen ? "w-64 sm:w-1/4 md:w-1/5" : "w-0"
+          } z-30 md:z-0 pt-4 transition-all duration-300 h-screen dark:bg-slate-950 overflow-hidden`}
         >
           <div className="flex flex-col h-screen">
             <div className="flex gap-1 items-center bg-white dark:bg-gray-900 mx-4 rounded-md border-gray-400 border-[1px]">
@@ -219,12 +262,12 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <main 
-          className={`flex-1 w-full transition-all duration-300 ${isMobile && isSidebarOpen ? 'ml-64 md:ml-0' : 'ml-0'}`}
+        <main
+          className={`flex-1 w-full transition-all duration-300 ${
+            isMobile && isSidebarOpen ? "ml-64 md:ml-0" : "ml-0"
+          }`}
         >
-          <div className="h-full w-full">
-            {renderSectionContent()}
-          </div>
+          <div className="h-full w-full">{renderSectionContent()}</div>
         </main>
       </div>
     </div>

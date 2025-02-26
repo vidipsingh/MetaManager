@@ -1,47 +1,62 @@
-import React, { useEffect, useState } from 'react';
-import { useSession } from 'next-auth/react';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { IoChatbubbleEllipsesOutline, IoCalendarOutline, IoCallOutline } from 'react-icons/io5';
-import { TbCheckbox } from 'react-icons/tb';
-import { HiOutlineUserGroup } from 'react-icons/hi';
+"use client";
+
+import React, { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { IoChatbubbleEllipsesOutline, IoCalendarOutline, IoCallOutline } from "react-icons/io5";
+import { TbCheckbox } from "react-icons/tb";
+import { HiOutlineUserGroup } from "react-icons/hi";
 
 interface TeamComponentProps {
   onChatSelect?: (userId: string) => void;
 }
 
 const TeamComponent: React.FC<TeamComponentProps> = ({ onChatSelect }) => {
-  const { data: session } = useSession();
-  const [users, setUsers] = useState([]);
+  const { data: session, status } = useSession();
+  const [users, setUsers] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const response = await fetch('/api/getAllUsers');
+        console.log("Fetching users for TeamComponent, session:", session);
+        const response = await fetch("/api/getAllUsers", {
+          headers: {
+            Authorization: `Bearer ${session?.customToken}`,
+          },
+        });
         if (response.ok) {
           const data = await response.json();
-          const filteredUsers = data.filter(user => user.id !== session?.user?.id);
+          console.log("TeamComponent all users:", data);
+          const filteredUsers = data.filter(
+            (user: any) =>
+              user.id !== session?.user?.id &&
+              user.organizationId === session?.user?.organizationId
+          );
+          console.log("TeamComponent filtered users:", filteredUsers);
           setUsers(filteredUsers);
+        } else {
+          console.error("Failed to fetch users:", response.status, await response.text());
         }
       } catch (error) {
-        console.error('Error fetching users:', error);
+        console.error("Error fetching users:", error);
       } finally {
         setIsLoading(false);
       }
     };
 
-    if (session?.user?.id) {
+    if (status === "authenticated" && session?.user?.id) {
       fetchUsers();
     }
-  }, [session?.user?.id]);
+  }, [session, status]);
 
-  const getInitials = (name, email) => {
+  const getInitials = (name: string | undefined, email: string | undefined) => {
     if (name) {
-      return name.split(' ').map(n => n[0]).join('');
+      return name.split(" ").map((n) => n[0]).join("");
     }
-    return email ? email[0].toUpperCase() : '?';
+    return email ? email[0].toUpperCase() : "?";
   };
 
   const handleMessageClick = (userId: string) => {
@@ -50,7 +65,7 @@ const TeamComponent: React.FC<TeamComponentProps> = ({ onChatSelect }) => {
     }
   };
 
-  if (isLoading) {
+  if (status === "loading" || isLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-purple-600"></div>
@@ -60,7 +75,6 @@ const TeamComponent: React.FC<TeamComponentProps> = ({ onChatSelect }) => {
 
   return (
     <div className="p-6 space-y-6 border-l-[1.5px] border-gray-300 dark:border-gray-500">
-      {/* Team Overview Section */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardContent className="p-6">
@@ -119,64 +133,67 @@ const TeamComponent: React.FC<TeamComponentProps> = ({ onChatSelect }) => {
         </Card>
       </div>
 
-      {/* Team Members Grid */}
       <Card className="w-full">
         <CardHeader>
           <CardTitle>Team Members</CardTitle>
         </CardHeader>
         <CardContent>
           <ScrollArea className="h-[600px] pr-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {users.map((user) => (
-                <Card key={user.id} className="overflow-hidden">
-                  <CardContent className="p-4">
-                    <div className="flex items-start gap-4">
-                      <div className="relative">
-                        <Avatar className="w-12 h-12">
-                          <AvatarFallback className="bg-purple-600 text-white">
-                            {getInitials(user.name, user.email)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white bg-gray-500" />
+            {users.length === 0 ? (
+              <p className="text-center text-gray-500">No team members found in your organization.</p>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {users.map((user) => (
+                  <Card key={user.id} className="overflow-hidden">
+                    <CardContent className="p-4">
+                      <div className="flex items-start gap-4">
+                        <div className="relative">
+                          <Avatar className="w-12 h-12">
+                            <AvatarFallback className="bg-purple-600 text-white">
+                              {getInitials(user.name, user.email)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white bg-gray-500" />
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="font-semibold">{user.name || "Unnamed User"}</h3>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">{user.email}</p>
+                        </div>
                       </div>
-                      <div className="flex-1">
-                        <h3 className="font-semibold">{user.name || 'Unnamed User'}</h3>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">{user.email}</p>
-                      </div>
-                    </div>
 
-                    <div className="mt-4 space-y-2">
-                      <div className="flex items-center gap-2 text-sm">
-                        <TbCheckbox className="w-4 h-4" />
-                        <span>Active Projects: 0</span>
+                      <div className="mt-4 space-y-2">
+                        <div className="flex items-center gap-2 text-sm">
+                          <TbCheckbox className="w-4 h-4" />
+                          <span>Active Projects: 0</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm">
+                          <IoCalendarOutline className="w-4 h-4" />
+                          <span>Next Meeting: Not Scheduled</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm">
+                          <IoChatbubbleEllipsesOutline className="w-4 h-4" />
+                          <span>0 Tasks Completed</span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2 text-sm">
-                        <IoCalendarOutline className="w-4 h-4" />
-                        <span>Next Meeting: Not Scheduled</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm">
-                        <IoChatbubbleEllipsesOutline className="w-4 h-4" />
-                        <span>0 Tasks Completed</span>
-                      </div>
-                    </div>
 
-                    <div className="mt-4 flex gap-2">
-                      <button className="flex-1 p-2 text-sm rounded-md bg-purple-100 dark:bg-purple-900 text-purple-600 dark:text-white/85 hover:bg-purple-200 dark:hover:bg-purple-800 transition-colors">
-                        <IoCallOutline className="w-4 h-4 inline mr-1" />
-                        Call
-                      </button>
-                      <button 
-                        onClick={() => handleMessageClick(user.id)}
-                        className="flex-1 p-2 text-sm rounded-md bg-purple-100 dark:bg-purple-900 text-purple-600 dark:text-white/85 hover:bg-purple-200 dark:hover:bg-purple-800 transition-colors"
-                      >
-                        <IoChatbubbleEllipsesOutline className="w-4 h-4 inline mr-1" />
-                        Message
-                      </button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+                      <div className="mt-4 flex gap-2">
+                        <button className="flex-1 p-2 text-sm rounded-md bg-purple-100 dark:bg-purple-900 text-purple-600 dark:text-white/85 hover:bg-purple-200 dark:hover:bg-purple-800 transition-colors">
+                          <IoCallOutline className="w-4 h-4 inline mr-1" />
+                          Call
+                        </button>
+                        <button
+                          onClick={() => handleMessageClick(user.id)}
+                          className="flex-1 p-2 text-sm rounded-md bg-purple-100 dark:bg-purple-900 text-purple-600 dark:text-white/85 hover:bg-purple-200 dark:hover:bg-purple-800 transition-colors"
+                        >
+                          <IoChatbubbleEllipsesOutline className="w-4 h-4 inline mr-1" />
+                          Message
+                        </button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
           </ScrollArea>
         </CardContent>
       </Card>

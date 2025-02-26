@@ -16,7 +16,7 @@ export const authOptions: AuthOptions = {
       name: "credentials",
       credentials: {
         email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" }
+        password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
         console.log("Email/Password authorize called with:", credentials);
@@ -25,17 +25,21 @@ export const authOptions: AuthOptions = {
         }
 
         const user = await prisma.user.findUnique({
-          where: { email: credentials.email }
+          where: { email: credentials.email },
+          select: {
+            id: true,
+            email: true,
+            name: true,
+            password: true,
+            organizationId: true,
+          },
         });
 
         if (!user || !user.password) {
           throw new Error("User not found");
         }
 
-        const isPasswordValid = await bcrypt.compare(
-          credentials.password,
-          user.password
-        );
+        const isPasswordValid = await bcrypt.compare(credentials.password, user.password);
 
         if (!isPasswordValid) {
           throw new Error("Invalid credentials");
@@ -44,15 +48,16 @@ export const authOptions: AuthOptions = {
         return {
           id: user.id,
           email: user.email,
-          name: user.name
+          name: user.name,
+          organizationId: user.organizationId,
         };
-      }
+      },
     }),
     CredentialsProvider({
       id: "ethereum",
       name: "Ethereum",
       credentials: {
-        address: { label: "Ethereum Address", type: "text" }
+        address: { label: "Ethereum Address", type: "text" },
       },
       async authorize(credentials) {
         console.log("Ethereum authorize called with:", credentials);
@@ -61,11 +66,18 @@ export const authOptions: AuthOptions = {
           throw new Error("No wallet address provided");
         }
 
-        const address = ethers.getAddress(credentials.address); // Normalize address
+        const address = ethers.getAddress(credentials.address);
         console.log("Normalized address:", address);
 
         let user = await prisma.user.findFirst({
-          where: { ethAddress: address }
+          where: { ethAddress: address },
+          select: {
+            id: true,
+            email: true,
+            name: true,
+            ethAddress: true,
+            organizationId: true,
+          },
         });
 
         if (!user) {
@@ -75,7 +87,14 @@ export const authOptions: AuthOptions = {
               email: `${address}@metamanager.eth`,
               name: address.slice(0, 6) + "..." + address.slice(-4),
               ethAddress: address,
-            }
+            },
+            select: {
+              id: true,
+              email: true,
+              name: true,
+              ethAddress: true,
+              organizationId: true,
+            },
           });
         } else {
           console.log("Found existing user:", user);
@@ -85,15 +104,16 @@ export const authOptions: AuthOptions = {
           id: user.id,
           email: user.email,
           name: user.name,
-          ethAddress: address
+          ethAddress: address,
+          organizationId: user.organizationId,
         };
-      }
-    })
+      },
+    }),
   ],
   pages: {
-    signIn: '/login',
-    signOut: '/login',
-    error: '/login',
+    signIn: "/login",
+    signOut: "/login",
+    error: "/login",
   },
   callbacks: {
     async signIn({ user, account }) {
@@ -101,7 +121,14 @@ export const authOptions: AuthOptions = {
       if (account?.provider === "google") {
         try {
           const existingUser = await prisma.user.findUnique({
-            where: { email: user.email! }
+            where: { email: user.email! },
+            select: {
+              id: true,
+              email: true,
+              name: true,
+              emailVerified: true,
+              organizationId: true,
+            },
           });
 
           if (!existingUser) {
@@ -110,11 +137,20 @@ export const authOptions: AuthOptions = {
                 email: user.email!,
                 name: user.name!,
                 emailVerified: new Date(),
-              }
+              },
+              select: {
+                id: true,
+                email: true,
+                name: true,
+                emailVerified: true,
+                organizationId: true,
+              },
             });
             user.id = newUser.id;
+            user.organizationId = newUser.organizationId;
           } else {
             user.id = existingUser.id;
+            user.organizationId = existingUser.organizationId;
           }
         } catch (error) {
           console.error("Error in signIn callback:", error);
@@ -129,35 +165,38 @@ export const authOptions: AuthOptions = {
       if (user) {
         token.id = user.id;
         token.ethAddress = user.ethAddress;
+        token.organizationId = user.organizationId;
       }
-      
+
       if (trigger === "update" && session) {
         token = { ...token, ...session };
       }
-      
+
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
-        session.user.id = token.id;
-        session.user.ethAddress = token.ethAddress;
-        
+        session.user.id = token.id as string;
+        session.user.ethAddress = token.ethAddress as string | undefined;
+        session.user.organizationId = token.organizationId as string | undefined;
+
         const customToken = jwt.sign(
-          { 
+          {
             userId: token.id,
             email: session.user.email,
-            ethAddress: token.ethAddress
+            ethAddress: token.ethAddress,
+            organizationId: token.organizationId,
           },
           process.env.JWT_SECRET!,
           { expiresIn: "24h" }
         );
-        
+
         session.customToken = customToken;
       }
       return session;
-    }
+    },
   },
-  debug: true, // Enable debug mode for more logs
+  debug: true,
 };
 
 const handler = NextAuth(authOptions);

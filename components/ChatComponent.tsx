@@ -1,19 +1,20 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from 'react';
-import { useSession } from 'next-auth/react';
-import { Socket, io } from 'socket.io-client';
-import { Card, CardContent } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { useRouter } from 'next/navigation';
+import React, { useEffect, useRef, useState } from "react";
+import { useSession } from "next-auth/react";
+import { Socket, io } from "socket.io-client";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { useRouter } from "next/navigation";
 
 interface User {
   id: string;
   name?: string;
   email?: string;
+  organizationId?: string;
 }
 
 interface Message {
@@ -33,16 +34,16 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ initialSelectedUserId }) 
   const { data: session, status } = useSession();
   const [socket, setSocket] = useState<Socket | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
-  const [newMessage, setNewMessage] = useState('');
+  const [newMessage, setNewMessage] = useState("");
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const router = useRouter();
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [selectedUserId, setSelectedUserId] = useState<string>(initialSelectedUserId || '');
-  const [conversationId, setConversationId] = useState<string>('');
+  const [selectedUserId, setSelectedUserId] = useState<string>(initialSelectedUserId || "");
+  const [conversationId, setConversationId] = useState<string>("");
 
   useEffect(() => {
     if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages]);
 
@@ -54,39 +55,55 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ initialSelectedUserId }) 
 
     const fetchAllUsers = async () => {
       try {
-        const res = await fetch("/api/getAllUsers");
+        console.log("Fetching users for ChatComponent, session:", session);
+        const res = await fetch("/api/getAllUsers", {
+          headers: {
+            Authorization: `Bearer ${session?.customToken}`,
+          },
+        });
         if (res.ok) {
           const users = await res.json();
-          setAllUsers(users);
+          console.log("ChatComponent all users:", users);
+          const orgUsers = users.filter(
+            (user: User) =>
+              user.id !== session?.user?.id &&
+              user.organizationId === session?.user?.organizationId
+          );
+          console.log("ChatComponent filtered users:", orgUsers);
+          setAllUsers(orgUsers);
+        } else {
+          console.error("Failed to fetch users:", res.status, await res.text());
         }
       } catch (error) {
         console.error("Error fetching users:", error);
       }
     };
 
-    fetchAllUsers();
+    if (status === "authenticated") {
+      fetchAllUsers();
+    }
   }, [session, status, router]);
 
   useEffect(() => {
     if (!session?.user?.id) return;
 
-    const socketInstance = io('http://localhost:3000', {
-      path: '/api/socketio',
+    const socketInstance = io("http://localhost:3000", {
+      path: "/api/socketio",
       auth: {
-        token: session?.customToken
-      }
+        token: session?.customToken,
+      },
     });
 
-    socketInstance.on('connect', () => {
-      console.log('Socket connected:', socketInstance.id);
-      socketInstance.emit('join', session.user.id);
+    socketInstance.on("connect", () => {
+      console.log("Socket connected:", socketInstance.id);
+      socketInstance.emit("join", session.user.id);
     });
 
-    socketInstance.on('new-message', (message: Message) => {
-      setMessages(prev => {
-        const exists = prev.some(m => m.id === message.id);
+    socketInstance.on("new-message", (message: Message) => {
+      setMessages((prev) => {
+        const exists = prev.some((m) => m.id === message.id);
         if (exists) return prev;
-        
+
         if (message.conversationId === conversationId) {
           return [...prev, message];
         }
@@ -106,10 +123,11 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ initialSelectedUserId }) 
       if (!session?.user?.id || !selectedUserId) return;
 
       try {
-        const response = await fetch('/api/conversations', {
-          method: 'POST',
+        const response = await fetch("/api/conversations", {
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session?.customToken}`,
           },
           body: JSON.stringify({
             userId: session.user.id,
@@ -121,6 +139,8 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ initialSelectedUserId }) 
           const conversation = await response.json();
           setConversationId(conversation.id);
           setMessages(conversation.messages || []);
+        } else {
+          console.error("Failed to load conversation:", response.status, await response.text());
         }
       } catch (error) {
         console.error("Error loading conversation:", error);
@@ -140,23 +160,23 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ initialSelectedUserId }) 
       senderId: session.user.id,
       receiverId: selectedUserId,
       conversationId: conversationId,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
     };
 
     try {
-      const response = await fetch('/api/messages', {
-        method: 'POST',
+      const response = await fetch("/api/messages", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session?.customToken}`,
         },
         body: JSON.stringify(messageData),
       });
 
       if (response.ok) {
-        // Add the sent message to local state immediately
-        setMessages(prev => [...prev, messageData]);
-        socket?.emit('send-message', messageData);
-        setNewMessage('');
+        setMessages((prev) => [...prev, messageData]);
+        socket?.emit("send-message", messageData);
+        setNewMessage("");
       } else {
         console.error("Failed to send message:", await response.text());
       }
@@ -165,32 +185,38 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ initialSelectedUserId }) 
     }
   };
 
-  const otherUsers = allUsers.filter(user => user.id !== session?.user?.id);
+  const otherUsers = allUsers.filter((user) => user.id !== session?.user?.id);
+
+  if (status === "loading") {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div className="flex h-screen border-l-[1.5px] border-gray-300 dark:border-gray-500">
       <div className="w-1/3 bg-gray-50 dark:bg-slate-900 border-r">
         <ScrollArea className="h-full">
-          {otherUsers.map((user) => (
-            <div 
-              key={user.id} 
-              className={`px-3 py-2 dark:hover:bg-slate-600 hover:bg-gray-200 cursor-pointer ${
-                selectedUserId === user.id ? 'bg-gray-200 dark:bg-slate-600' : ''
-              }`}
-              onClick={() => setSelectedUserId(user.id)}
-            >
-              <div className="flex items-center gap-2">
-                <Avatar className="w-8 h-8">
-                  <AvatarFallback className="bg-purple-600 text-white">
-                    {user.name?.[0] || user.email?.[0] || '?'}
-                  </AvatarFallback>
-                </Avatar>
-                <span className="font-semibold text-sm">
-                  {user.name || user.email}
-                </span>
+          {otherUsers.length === 0 ? (
+            <p className="p-4 text-center text-gray-500">No other users in your organization.</p>
+          ) : (
+            otherUsers.map((user) => (
+              <div
+                key={user.id}
+                className={`px-3 py-2 dark:hover:bg-slate-600 hover:bg-gray-200 cursor-pointer ${
+                  selectedUserId === user.id ? "bg-gray-200 dark:bg-slate-600" : ""
+                }`}
+                onClick={() => setSelectedUserId(user.id)}
+              >
+                <div className="flex items-center gap-2">
+                  <Avatar className="w-8 h-8">
+                    <AvatarFallback className="bg-purple-600 text-white">
+                      {user.name?.[0] || user.email?.[0] || "?"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="font-semibold text-sm">{user.name || user.email}</span>
+                </div>
               </div>
-            </div>
-          ))}
+            ))
+          )}
         </ScrollArea>
       </div>
 
@@ -200,32 +226,33 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ initialSelectedUserId }) 
             <div className="space-y-4 min-h-full">
               {messages.map((message) => {
                 const isCurrentUser = message.senderId === session?.user?.id;
-                const user = allUsers.find(u => u.id === message.senderId);
-                
+                const user = allUsers.find((u) => u.id === message.senderId);
+
                 return (
-                  <div key={message.id} className={`flex items-start gap-2 ${isCurrentUser ? 'justify-end' : 'justify-start'}`}>
+                  <div
+                    key={message.id}
+                    className={`flex items-start gap-2 ${
+                      isCurrentUser ? "justify-end" : "justify-start"
+                    }`}
+                  >
                     {!isCurrentUser && (
                       <Avatar className="w-8 h-8">
                         <AvatarFallback className="bg-purple-600 text-white">
-                          {user?.name?.[0] || user?.email?.[0] || '?'}
+                          {user?.name?.[0] || user?.email?.[0] || "?"}
                         </AvatarFallback>
                       </Avatar>
                     )}
-                    <div 
+                    <div
                       className={`p-3 rounded-lg max-w-[70%] ${
-                        isCurrentUser 
-                          ? 'bg-blue-500 text-white' 
-                          : 'bg-gray-100 dark:bg-gray-700'
+                        isCurrentUser ? "bg-blue-500 text-white" : "bg-gray-100 dark:bg-gray-700"
                       }`}
                     >
-                      <p className="text-sm break-words">
-                        {message.content}
-                      </p>
+                      <p className="text-sm break-words">{message.content}</p>
                     </div>
                     {isCurrentUser && (
                       <Avatar className="w-8 h-8">
                         <AvatarFallback className="bg-blue-600 text-white">
-                          {user?.name?.[0] || user?.email?.[0] || '?'}
+                          {user?.name?.[0] || user?.email?.[0] || "?"}
                         </AvatarFallback>
                       </Avatar>
                     )}

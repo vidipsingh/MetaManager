@@ -8,10 +8,7 @@ export async function GET(req: NextRequest) {
     const authHeader = req.headers.get("authorization");
 
     if (!authHeader?.startsWith("Bearer ")) {
-      return NextResponse.json(
-        { error: "No token provided" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "No token provided" }, { status: 401 });
     }
 
     const token = authHeader.split(" ")[1];
@@ -25,7 +22,14 @@ export async function GET(req: NextRequest) {
           id: true,
           name: true,
           email: true,
-          ethAddress: true, // Include ethAddress
+          ethAddress: true,
+          organizationId: true,
+          organization: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
         },
       });
     } catch (jwtError) {
@@ -37,26 +41,27 @@ export async function GET(req: NextRequest) {
             id: true,
             name: true,
             email: true,
-            ethAddress: true, // Include ethAddress
+            ethAddress: true,
+            organizationId: true,
+            organization: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
           },
         });
       }
     }
 
     if (!userData) {
-      return NextResponse.json(
-        { error: "User not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
     console.log("getUserData returning:", userData);
     return NextResponse.json(userData);
   } catch (error) {
     console.error("Error in getUserData:", error);
-    return NextResponse.json(
-      { error: "Failed to get user data" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to get user data" }, { status: 500 });
   }
 }
