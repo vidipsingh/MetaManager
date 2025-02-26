@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import Header from "@/components/DashboardHeader/Header";
+import Chatbot from "@/components/Chatbot";
 import { CiSearch } from "react-icons/ci";
 import { RxDashboard } from "react-icons/rx";
 import { IoChatbubbleEllipsesOutline, IoCalendarOutline, IoCallOutline } from "react-icons/io5";
@@ -90,7 +91,6 @@ export default function Dashboard() {
           });
           console.log("Dashboard user data:", data);
 
-          // Fetch team members count
           const usersRes = await fetch("/api/getAllUsers", {
             headers: {
               Authorization: `Bearer ${token || session?.customToken}`,
@@ -203,7 +203,7 @@ export default function Dashboard() {
       : userData.email);
 
   return (
-    <div className="min-h-screen dark:bg-slate-950">
+    <div className="min-h-screen dark:bg-slate-950 relative">
       <Header
         onToggleSidebar={toggleSidebar}
         onLogout={handleLogout}
@@ -270,6 +270,9 @@ export default function Dashboard() {
           <div className="h-full w-full">{renderSectionContent()}</div>
         </main>
       </div>
+
+      {/* Chatbot Component */}
+      <Chatbot />
     </div>
   );
 };

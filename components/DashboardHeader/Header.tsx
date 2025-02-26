@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation";
 import PomodoroTimer from "./Pomodoro";
 import { ModeToggle } from "../Theme/ModeToggle";
 import { HiMenuAlt2 } from "react-icons/hi";
+import { BiBuildings } from "react-icons/bi";
 import { MdDashboard, MdChat, MdGroup, MdCalendarToday, MdCall, MdList } from "react-icons/md";
 
 interface HeaderProps {
@@ -122,10 +123,9 @@ const Header = ({ onToggleSidebar, onLogout, isMobile, userName, orgName }: Head
     <div className="border-b-[1.5px] flex h-16 justify-between dark:bg-slate-950 dark:border-b-gray-500 border-b-gray-300">
       <div className="flex px-4 pt-4 pb-2 md:w-1/5.1 border-r-[1.5px] border-gray-300 dark:border-gray-500 items-center gap-4 md:gap-20 bg-zinc-200 dark:bg-slate-950">
         <div className="flex items-center gap-2">
-          <Image src={github_dp} width={35} height={35} alt="" className="rounded-full" />
-          <div className="dark:bg-slate-950 hidden sm:block">
+            <BiBuildings className="w-5 h-5"/>
+          <div className="dark:bg-slate-950 hidden sm:block items-center">
             <h1 className="font-semibold text-sm dark:bg-slate-950">{displayOrgName}</h1>
-            <h1 className="text-gray-600 text-xs dark:text-white/70">Creative Studio</h1>
           </div>
         </div>
         <button onClick={handleSidebarToggle} className="focus:outline-none">
@@ -177,7 +177,7 @@ const Header = ({ onToggleSidebar, onLogout, isMobile, userName, orgName }: Head
           <Image src={github_dp} width={30} height={30} alt="" className="rounded-full" />
           <div className="text-sm hidden sm:block">
             <h1 className="font-semibold">{displayName}</h1>
-            <h1 className="text-gray-600 dark:text-white/70">Creative Studio</h1>
+            <h1 className="text-gray-600 dark:text-white/70">{displayOrgName}</h1>
           </div>
 
           <div className="md:hidden flex items-center gap-2 ml-2">
