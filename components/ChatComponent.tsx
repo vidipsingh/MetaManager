@@ -41,12 +41,14 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ initialSelectedUserId }) 
   const [selectedUserId, setSelectedUserId] = useState<string>(initialSelectedUserId || "");
   const [conversationId, setConversationId] = useState<string>("");
 
+  // Scroll to the latest message
   useEffect(() => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages]);
 
+  // Fetch all users
   useEffect(() => {
     if (!session && status !== "loading") {
       router.push("/login");
@@ -55,7 +57,6 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ initialSelectedUserId }) 
 
     const fetchAllUsers = async () => {
       try {
-        console.log("Fetching users for ChatComponent, session:", session);
         const res = await fetch("/api/getAllUsers", {
           headers: {
             Authorization: `Bearer ${session?.customToken}`,
@@ -63,13 +64,11 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ initialSelectedUserId }) 
         });
         if (res.ok) {
           const users = await res.json();
-          console.log("ChatComponent all users:", users);
           const orgUsers = users.filter(
             (user: User) =>
               user.id !== session?.user?.id &&
               user.organizationId === session?.user?.organizationId
           );
-          console.log("ChatComponent filtered users:", orgUsers);
           setAllUsers(orgUsers);
         } else {
           console.error("Failed to fetch users:", res.status, await res.text());
@@ -84,6 +83,7 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ initialSelectedUserId }) 
     }
   }, [session, status, router]);
 
+  // Socket.IO setup
   useEffect(() => {
     if (!session?.user?.id) return;
 
@@ -100,13 +100,23 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ initialSelectedUserId }) 
     });
 
     socketInstance.on("new-message", (message: Message) => {
+      console.log("Received new-message:", message);
       setMessages((prev) => {
-        const exists = prev.some((m) => m.id === message.id);
-        if (exists) return prev;
+        // Prevent duplicates
+        if (prev.some((m) => m.id === message.id)) {
+          console.log("Duplicate message ignored:", message.id);
+          return prev;
+        }
 
-        if (message.conversationId === conversationId) {
+        // Add message if it involves the current user and selected user
+        if (
+          (message.senderId === session.user.id && message.receiverId === selectedUserId) ||
+          (message.senderId === selectedUserId && message.receiverId === session.user.id)
+        ) {
+          console.log("Adding message to UI:", message);
           return [...prev, message];
         }
+        console.log("Message not relevant to current conversation:", message);
         return prev;
       });
     });
@@ -116,8 +126,9 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ initialSelectedUserId }) 
     return () => {
       socketInstance.disconnect();
     };
-  }, [session, conversationId]);
+  }, [session, selectedUserId]);
 
+  // Load conversation when selectedUserId changes
   useEffect(() => {
     const loadConversation = async () => {
       if (!session?.user?.id || !selectedUserId) return;
@@ -139,6 +150,7 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ initialSelectedUserId }) 
           const conversation = await response.json();
           setConversationId(conversation.id);
           setMessages(conversation.messages || []);
+          console.log("Loaded conversation:", conversation);
         } else {
           console.error("Failed to load conversation:", response.status, await response.text());
         }
@@ -150,12 +162,13 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ initialSelectedUserId }) 
     loadConversation();
   }, [selectedUserId, session?.user?.id]);
 
+  // Send message
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newMessage.trim() || !session?.user?.id || !selectedUserId || !conversationId) return;
 
-    const messageData = {
-      id: Date.now().toString(),
+    const messageData: Message = {
+      id: Date.now().toString(), // Temporary ID
       content: newMessage,
       senderId: session.user.id,
       receiverId: selectedUserId,
@@ -174,8 +187,15 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ initialSelectedUserId }) 
       });
 
       if (response.ok) {
-        setMessages((prev) => [...prev, messageData]);
-        socket?.emit("send-message", messageData);
+        const savedMessage = await response.json();
+        console.log("Message saved:", savedMessage);
+        // Add message locally for sender immediately
+        setMessages((prev) => {
+          if (prev.some((m) => m.id === savedMessage.id)) return prev;
+          return [...prev, savedMessage];
+        });
+        // Emit to socket for real-time update
+        socket?.emit("send-message", savedMessage);
         setNewMessage("");
       } else {
         console.error("Failed to send message:", await response.text());

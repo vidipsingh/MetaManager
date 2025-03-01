@@ -1,99 +1,59 @@
-// app/api/todos/[id]/route.ts
-import { NextResponse } from 'next/server';
+import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
-import { prisma } from '@/lib/prisma';
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { prisma } from "@/lib/prisma";
 
-interface RouteContextProps {
-  params: {
-    id: string;
-  };
-}
-
-export async function PUT(
-  request: Request,
-  context: RouteContextProps
-) {
+export async function GET(request: Request) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id } = context.params;
-    const body = await request.json();
-    const { title, description, priority, dueDate, completed, projectId } = body;
+    const url = new URL(request.url);
+    const userId = url.searchParams.get("userId") || session.user.id;
 
-    // Verify todo ownership
-    const existingTodo = await prisma.todo.findFirst({
-      where: {
-        id,
-        userId: session.user.id,
+    const todos = await prisma.todo.findMany({
+      where: { userId: userId },
+      orderBy: { createdAt: "desc" },
+      include: {
+        project: true,
       },
     });
 
-    if (!existingTodo) {
-      return NextResponse.json({ error: 'Todo not found' }, { status: 404 });
+    return NextResponse.json(todos);
+  } catch (error) {
+    console.error("GET /api/todos error:", error);
+    return NextResponse.json({ error: "Failed to fetch todos" }, { status: 500 });
+  }
+}
+
+export async function POST(request: Request) {
+  try {
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const updatedTodo = await prisma.todo.update({
-      where: { id },
+    const body = await request.json();
+    const { title, description, priority, dueDate, projectId } = body;
+
+    const todo = await prisma.todo.create({
       data: {
         title,
         description,
         priority,
         dueDate: dueDate ? new Date(dueDate) : null,
-        completed,
+        userId: session.user.id,
         projectId: projectId || null,
       },
     });
 
-    return NextResponse.json(updatedTodo);
+    return NextResponse.json(todo, { status: 201 });
   } catch (error) {
-    console.error('PUT /api/todos/[id] error:', error);
-    return NextResponse.json(
-      { error: 'Failed to update todo' },
-      { status: 500 }
-    );
-  }
-}
-
-export async function DELETE(
-  request: Request,
-  context: RouteContextProps
-) {
-  try {
-    const session = await getServerSession(authOptions);
-    
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const { id } = context.params;
-
-    // Verify todo ownership
-    const existingTodo = await prisma.todo.findFirst({
-      where: {
-        id,
-        userId: session.user.id,
-      },
-    });
-
-    if (!existingTodo) {
-      return NextResponse.json({ error: 'Todo not found' }, { status: 404 });
-    }
-
-    await prisma.todo.delete({
-      where: { id },
-    });
-
-    return new NextResponse(null, { status: 204 });
-  } catch (error) {
-    console.error('DELETE /api/todos/[id] error:', error);
-    return NextResponse.json(
-      { error: 'Failed to delete todo' },
-      { status: 500 }
-    );
+    console.error("POST /api/todos error:", error);
+    return NextResponse.json({ error: "Failed to create todo" }, { status: 500 });
   }
 }

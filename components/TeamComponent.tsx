@@ -8,6 +8,34 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { IoChatbubbleEllipsesOutline, IoCalendarOutline, IoCallOutline } from "react-icons/io5";
 import { TbCheckbox } from "react-icons/tb";
 import { HiOutlineUserGroup } from "react-icons/hi";
+import { Users, ListTodo, Calendar } from "lucide-react";
+import { format } from "date-fns";
+
+interface Todo {
+  id: string;
+  title: string;
+  description?: string;
+  priority: "LOW" | "NORMAL" | "HIGH" | "URGENT";
+  dueDate?: Date;
+  completed: boolean;
+  projectId?: string;
+}
+
+interface CalendarEvent {
+  id: string;
+  title: string;
+  description?: string;
+  startTime: Date;
+  endTime: Date;
+}
+
+interface UserData {
+  id: string;
+  name?: string;
+  email?: string;
+  todos: Todo[];
+  events: CalendarEvent[];
+}
 
 interface TeamComponentProps {
   onChatSelect?: (userId: string) => void;
@@ -15,7 +43,9 @@ interface TeamComponentProps {
 
 const TeamComponent: React.FC<TeamComponentProps> = ({ onChatSelect }) => {
   const { data: session, status } = useSession();
-  const [users, setUsers] = useState<any[]>([]);
+  const [users, setUsers] = useState<UserData[]>([]);
+  const [todos, setTodos] = useState<Todo[]>([]);
+  const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -29,26 +59,91 @@ const TeamComponent: React.FC<TeamComponentProps> = ({ onChatSelect }) => {
         });
         if (response.ok) {
           const data = await response.json();
-          console.log("TeamComponent all users:", data);
           const filteredUsers = data.filter(
             (user: any) =>
               user.id !== session?.user?.id &&
               user.organizationId === session?.user?.organizationId
           );
-          console.log("TeamComponent filtered users:", filteredUsers);
-          setUsers(filteredUsers);
+
+          // Fetch todos and events for each user
+          const usersWithData = await Promise.all(
+            filteredUsers.map(async (user: any) => {
+              const [todosRes, eventsRes] = await Promise.all([
+                fetch(`/api/todos?userId=${user.id}`, {
+                  headers: { Authorization: `Bearer ${session?.customToken}` },
+                }),
+                fetch(`/api/calendar?userId=${user.id}`, {
+                  headers: { Authorization: `Bearer ${session?.customToken}` },
+                }),
+              ]);
+
+              const todosData = todosRes.ok ? await todosRes.json() : [];
+              const eventsData = eventsRes.ok
+                ? (await eventsRes.json()).map((event: any) => ({
+                    ...event,
+                    startTime: new Date(event.startTime),
+                    endTime: new Date(event.endTime),
+                  }))
+                : [];
+
+              return {
+                ...user,
+                todos: todosData,
+                events: eventsData,
+              };
+            })
+          );
+
+          setUsers(usersWithData);
         } else {
           console.error("Failed to fetch users:", response.status, await response.text());
         }
       } catch (error) {
         console.error("Error fetching users:", error);
-      } finally {
-        setIsLoading(false);
+      }
+    };
+
+    const fetchCurrentUserTodos = async () => {
+      try {
+        const response = await fetch("/api/todos", {
+          headers: {
+            Authorization: `Bearer ${session?.customToken}`,
+          },
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setTodos(data);
+        }
+      } catch (error) {
+        console.error("Error fetching todos:", error);
+      }
+    };
+
+    const fetchCurrentUserEvents = async () => {
+      try {
+        const response = await fetch("/api/calendar", {
+          headers: {
+            Authorization: `Bearer ${session?.customToken}`,
+          },
+        });
+        if (response.ok) {
+          const data = await response.json();
+          const formattedEvents = data.map((event: any) => ({
+            ...event,
+            startTime: new Date(event.startTime),
+            endTime: new Date(event.endTime),
+          }));
+          setEvents(formattedEvents);
+        }
+      } catch (error) {
+        console.error("Error fetching events:", error);
       }
     };
 
     if (status === "authenticated" && session?.user?.id) {
-      fetchUsers();
+      Promise.all([fetchUsers(), fetchCurrentUserTodos(), fetchCurrentUserEvents()]).finally(() =>
+        setIsLoading(false)
+      );
     }
   }, [session, status]);
 
@@ -65,6 +160,44 @@ const TeamComponent: React.FC<TeamComponentProps> = ({ onChatSelect }) => {
     }
   };
 
+  const getUncompletedTodosCount = () => {
+    return todos.filter((todo) => !todo.completed).length;
+  };
+
+  const getHighPriorityCount = () => {
+    return todos.filter(
+      (todo) => !todo.completed && (todo.priority === "HIGH" || todo.priority === "URGENT")
+    ).length;
+  };
+
+  const getTodayEventsCount = () => {
+    const today = new Date();
+    return events.filter((event) => {
+      const eventDate = new Date(event.startTime);
+      return (
+        eventDate.getDate() === today.getDate() &&
+        eventDate.getMonth() === today.getMonth() &&
+        eventDate.getFullYear() === today.getFullYear()
+      );
+    }).length;
+  };
+
+  const getUserUncompletedTodosCount = (userTodos: Todo[]) => {
+    return userTodos.filter((todo) => !todo.completed).length;
+  };
+
+  const getUserTodayEventsCount = (userEvents: CalendarEvent[]) => {
+    const today = new Date();
+    return userEvents.filter((event) => {
+      const eventDate = new Date(event.startTime);
+      return (
+        eventDate.getDate() === today.getDate() &&
+        eventDate.getMonth() === today.getMonth() &&
+        eventDate.getFullYear() === today.getFullYear()
+      );
+    }).length;
+  };
+
   if (status === "loading" || isLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -75,64 +208,57 @@ const TeamComponent: React.FC<TeamComponentProps> = ({ onChatSelect }) => {
 
   return (
     <div className="p-6 space-y-6 border-l-[1.5px] border-gray-300 dark:border-gray-500">
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
+      {/* Quick Stats Section */}
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-4">
+        <Card className="relative overflow-hidden">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Team Members</p>
+                <p className="text-sm text-muted-foreground">Team Members</p>
                 <h3 className="text-2xl font-bold">{users.length}</h3>
               </div>
-              <div className="p-3 bg-purple-100 dark:bg-purple-900 rounded-full">
-                <HiOutlineUserGroup className="w-6 h-6 text-purple-600 dark:text-purple-300" />
+              <div className="h-12 w-12 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
+                <Users className="h-6 w-6 text-blue-600 dark:text-blue-300" />
               </div>
             </div>
+            <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-blue-300" />
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="relative overflow-hidden">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Active Projects</p>
-                <h3 className="text-2xl font-bold">12</h3>
+                <p className="text-sm text-muted-foreground">Todo Tasks</p>
+                <h3 className="text-2xl font-bold">{getUncompletedTodosCount()}</h3>
+                <p className="text-sm text-purple-500">{getHighPriorityCount()} high priority</p>
               </div>
-              <div className="p-3 bg-blue-100 dark:bg-blue-900 rounded-full">
-                <TbCheckbox className="w-6 h-6 text-blue-600 dark:text-blue-300" />
+              <div className="h-12 w-12 bg-purple-100 dark:bg-purple-900 rounded-full flex items-center justify-center">
+                <ListTodo className="h-6 w-6 text-purple-600 dark:text-purple-300" />
               </div>
             </div>
+            <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-purple-500 to-purple-300" />
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="relative overflow-hidden">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Scheduled Meetings</p>
-                <h3 className="text-2xl font-bold">8</h3>
+                <p className="text-sm text-muted-foreground">Calendar Events</p>
+                <h3 className="text-2xl font-bold">{events.length}</h3>
+                <p className="text-sm text-orange-500">{getTodayEventsCount()} today</p>
               </div>
-              <div className="p-3 bg-green-100 dark:bg-green-900 rounded-full">
-                <IoCalendarOutline className="w-6 h-6 text-green-600 dark:text-green-300" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Tasks Due Today</p>
-                <h3 className="text-2xl font-bold">15</h3>
-              </div>
-              <div className="p-3 bg-orange-100 dark:bg-orange-900 rounded-full">
-                <TbCheckbox className="w-6 h-6 text-orange-600 dark:text-orange-300" />
+              <div className="h-12 w-12 bg-orange-100 dark:bg-orange-900 rounded-full flex items-center justify-center">
+                <Calendar className="h-6 w-6 text-orange-600 dark:text-orange-300" />
               </div>
             </div>
+            <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-orange-500 to-orange-300" />
           </CardContent>
         </Card>
       </div>
 
+      {/* Team Members List */}
       <Card className="w-full">
         <CardHeader>
           <CardTitle>Team Members</CardTitle>
@@ -164,15 +290,11 @@ const TeamComponent: React.FC<TeamComponentProps> = ({ onChatSelect }) => {
                       <div className="mt-4 space-y-2">
                         <div className="flex items-center gap-2 text-sm">
                           <TbCheckbox className="w-4 h-4" />
-                          <span>Active Projects: 0</span>
+                          <span>Todo Tasks: {getUserUncompletedTodosCount(user.todos)}</span>
                         </div>
                         <div className="flex items-center gap-2 text-sm">
                           <IoCalendarOutline className="w-4 h-4" />
-                          <span>Next Meeting: Not Scheduled</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-sm">
-                          <IoChatbubbleEllipsesOutline className="w-4 h-4" />
-                          <span>0 Tasks Completed</span>
+                          <span>Events Today: {getUserTodayEventsCount(user.events)}</span>
                         </div>
                       </div>
 

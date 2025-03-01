@@ -1,11 +1,12 @@
-// app/api/socketio/route.ts
 import { Server } from 'socket.io';
 
 export default function handler(req, res) {
   if (res.socket.server.io) {
     console.log('Socket.IO server already running');
   } else {
-    const io = new Server(res.socket.server);
+    const io = new Server(res.socket.server, {
+      path: '/api/socketio',
+    });
     res.socket.server.io = io;
 
     io.on('connection', (socket) => {
@@ -13,13 +14,15 @@ export default function handler(req, res) {
 
       socket.on('join', (userId) => {
         socket.join(userId);
-        console.log(`User ${userId} joined`);
+        console.log(`User ${userId} joined room ${userId}`);
       });
 
       socket.on('send-message', (message) => {
-        console.log('Received message:', message);
-        // Broadcast to both sender and receiver
-        io.to(message.senderId).to(message.receiverId).emit('new-message', message);
+        console.log('Received send-message:', message);
+        // Emit to both sender and receiver rooms
+        io.to(message.senderId).emit('new-message', message);
+        io.to(message.receiverId).emit('new-message', message);
+        console.log(`Emitted new-message to rooms: ${message.senderId}, ${message.receiverId}`);
       });
 
       socket.on('disconnect', () => {

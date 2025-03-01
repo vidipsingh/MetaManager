@@ -3,11 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "NODE_OPTIONS='--max-old-space-size=4096' ts-node --project tsconfig.server.json server.ts",
-    "build": "NODE_OPTIONS='--max-old-space-size=4096' next build",
-    "start": "NODE_OPTIONS='--max-old-space-size=4096' NODE_ENV=production ts-node --project tsconfig.server.json server.ts",
-    "lint": "next lint"
-  },
+  "dev": "NODE_OPTIONS='--max-old-space-size=4096' next dev",
+  "build": "NODE_OPTIONS='--max-old-space-size=4096' next build",
+  "start": "NODE_OPTIONS='--max-old-space-size=4096' NODE_ENV=production ts-node --project tsconfig.server.json server.ts",
+  "lint": "next lint"
+},
   "dependencies": {
     "@emotion/react": "^11.13.3",
     "@emotion/styled": "^11.13.0",
