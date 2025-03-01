@@ -5,11 +5,13 @@ import { useRouter } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import Header from "@/components/DashboardHeader/Header";
 import Chatbot from "@/components/Chatbot";
+import WhiteboardComponent from "@/components/WhiteboardComponent";
 import { CiSearch } from "react-icons/ci";
 import { RxDashboard } from "react-icons/rx";
 import { IoChatbubbleEllipsesOutline, IoCalendarOutline, IoCallOutline } from "react-icons/io5";
 import { HiOutlineUserGroup } from "react-icons/hi";
 import { TbCheckbox } from "react-icons/tb";
+import { FaChalkboard } from "react-icons/fa";
 import DashboardContent from "@/components/DashboardContent";
 import ChatComponent from "@/components/ChatComponent";
 import TeamComponent from "@/components/TeamComponent";
@@ -41,6 +43,7 @@ export default function Dashboard() {
     { icon: IoCalendarOutline, name: "Calendar" },
     { icon: IoCallOutline, name: "Calls" },
     { icon: TbCheckbox, name: "To Do List" },
+    { icon: FaChalkboard, name: "Whiteboard" },
   ];
 
   const filteredMenuItems = menuItems.filter((item) =>
@@ -173,6 +176,8 @@ export default function Dashboard() {
         );
       case "To Do List":
         return <ListComponent />;
+      case "Whiteboard":
+        return <WhiteboardComponent />;
       default:
         return (
           <DashboardContent
