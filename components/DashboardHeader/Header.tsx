@@ -11,7 +11,7 @@ import PomodoroTimer from "./Pomodoro";
 import { ModeToggle } from "../Theme/ModeToggle";
 import { HiMenuAlt2 } from "react-icons/hi";
 import { BiBuildings } from "react-icons/bi";
-import { MdDashboard, MdChat, MdGroup, MdCalendarToday, MdCall, MdList } from "react-icons/md";
+import { MdDashboard, MdChat, MdGroup, MdCalendarToday, MdCall, MdList, MdOutlineDashboardCustomize } from "react-icons/md";
 
 interface HeaderProps {
   onToggleSidebar: () => void;
@@ -117,13 +117,14 @@ const Header = ({ onToggleSidebar, onLogout, isMobile, userName, orgName }: Head
     { icon: <MdCalendarToday />, name: "Calendar", description: "Schedule events and deadlines" },
     { icon: <MdCall />, name: "Calls", description: "Make and manage calls" },
     { icon: <MdList />, name: "Todo List", description: "Track tasks and progress" },
+    { icon: <MdOutlineDashboardCustomize />, name: "Whiteboard", description: "Collaborate on a digital whiteboard" },
   ];
 
   return (
     <div className="border-b-[1.5px] flex h-16 justify-between dark:bg-slate-950 dark:border-b-gray-500 border-b-gray-300">
       <div className="flex px-4 pt-4 pb-2 md:w-1/5.1 border-r-[1.5px] border-gray-300 dark:border-gray-500 items-center gap-4 md:gap-20 bg-zinc-200 dark:bg-slate-950">
         <div className="flex items-center gap-2">
-            <BiBuildings className="w-5 h-5"/>
+          <BiBuildings className="w-5 h-5" />
           <div className="dark:bg-slate-950 hidden sm:block items-center">
             <h1 className="font-semibold text-sm dark:bg-slate-950">{displayOrgName}</h1>
           </div>
@@ -186,19 +187,6 @@ const Header = ({ onToggleSidebar, onLogout, isMobile, userName, orgName }: Head
 
           {dropdownOpen && (
             <div className="absolute right-0 top-full w-44 md:w-36 bg-white dark:bg-slate-700 rounded-md shadow-lg z-50">
-              <div className="md:hidden">
-                <button className="block w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-slate-600">
-                  Profile
-                </button>
-                <button className="block w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-slate-600">
-                  Settings
-                </button>
-                <button className="block w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-slate-600">
-                  Help
-                </button>
-                <div className="border-t border-gray-200 dark:border-gray-600"></div>
-              </div>
-
               <button
                 onClick={onLogout}
                 className="block w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-slate-600 text-red-600 dark:text-red-400"
