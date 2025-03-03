@@ -6,7 +6,7 @@ export class SocketService {
   private io: SocketIOServer | null = null;
   private connectedUsers = new Map<string, string>();
   private userSockets = new Map<string, string>();
-  private activeCalls = new Set<string>(); // Track active calls
+  private activeCalls = new Set<string>();
 
   private constructor() {}
 
@@ -46,7 +46,6 @@ export class SocketService {
         await existingSocket.disconnect(true);
         this.connectedUsers.delete(existingSocketId);
         this.userSockets.delete(userId);
-        // Clean up any active calls for this user
         this.activeCalls.delete(userId);
       }
     }
@@ -71,7 +70,6 @@ export class SocketService {
       
       console.log(`User ${userId} connected with socket ${socket.id}`);
       
-      // Broadcast updated user list immediately after new connection
       this.broadcastOnlineUsers();
 
       socket.on('call-offer', ({ offer, receiverId }) => {
@@ -109,7 +107,6 @@ export class SocketService {
         const receiverSocketId = this.userSockets.get(receiverId);
         if (receiverSocketId) {
           this.io?.to(receiverSocketId).emit('call-rejected');
-          // Clean up call status
           const callerId = this.connectedUsers.get(socket.id);
           if (callerId) this.activeCalls.delete(callerId);
           this.activeCalls.delete(receiverId);
@@ -127,7 +124,6 @@ export class SocketService {
         const receiverSocketId = this.userSockets.get(receiverId);
         if (receiverSocketId) {
           this.io?.to(receiverSocketId).emit('call-ended');
-          // Clean up call status
           const callerId = this.connectedUsers.get(socket.id);
           if (callerId) this.activeCalls.delete(callerId);
           this.activeCalls.delete(receiverId);

@@ -2,8 +2,10 @@
 
 import React, { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
-import { format, addDays, startOfWeek, endOfWeek, eachDayOfInterval, 
-         addHours, setHours, setMinutes, isSameDay, isWithinInterval, isSameHour, differenceInHours } from 'date-fns';
+import { format, addDays, startOfWeek, endOfWeek, 
+         addHours, setHours, setMinutes, isSameDay, isSameHour, differenceInHours } from 'date-fns';
+import { eachDayOfInterval } from 'date-fns/eachDayOfInterval';
+import { isWithinInterval } from 'date-fns/isWithinInterval';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,7 +18,7 @@ import {
   DialogFooter,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { ChevronLeft, ChevronRight, Plus, Trash2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Trash2 } from 'lucide-react';
 
 interface CalendarEvent {
   id: string;
@@ -42,7 +44,7 @@ const CalendarComponent = () => {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [selectedTimeSlot, setSelectedTimeSlot] = useState<Date | null>(null);
+  const [, setSelectedTimeSlot] = useState<Date | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [newEvent, setNewEvent] = useState({
     id: '',
@@ -63,7 +65,7 @@ const CalendarComponent = () => {
       const response = await fetch('/api/calendar');
       if (!response.ok) throw new Error('Failed to fetch events');
       const data = await response.json();
-      setEvents(data.map((event: any) => ({
+      setEvents(data.map((event: CalendarEvent) => ({
         ...event,
         startTime: new Date(event.startTime),
         endTime: new Date(event.endTime),
@@ -212,9 +214,8 @@ const CalendarComponent = () => {
       
       if (isStartTime) return true;
 
-      // Check if this time slot is within the event's duration
-      const slotStart = new Date(date);
-      const slotEnd = addHours(slotStart, 1);
+      // const slotStart = new Date(date);
+      // const slotEnd = addHours(slotStart, 1);
       
       return isWithinInterval(date, { 
         start: event.startTime,

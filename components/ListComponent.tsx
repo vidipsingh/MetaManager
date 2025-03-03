@@ -19,10 +19,9 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
 import { CalendarIcon, Plus, Trash2, Edit2 } from 'lucide-react';
-// import { useToast } from "@/components/ui/use-toast";
+
 import {
   Dialog,
   DialogContent,
@@ -53,16 +52,22 @@ interface Project {
 const ipfs = create({ url: 'https://ipfs.infura.io:5001' });
 
 const ListComponent = () => {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   // const { toast } = useToast();
   const [todos, setTodos] = useState<Todo[]>([]);
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [newTodo, setNewTodo] = useState({
+  const [, setProjects] = useState<Project[]>([]);
+  const [newTodo, setNewTodo] = useState<{
+    title: string;
+    description: string;
+    priority: 'LOW' | 'NORMAL' | 'HIGH' | 'URGENT';
+    dueDate?: Date;
+    projectId?: string;
+  }>({
     title: '',
     description: '',
-    priority: 'NORMAL' as const,
-    dueDate: undefined as Date | undefined,
-    projectId: undefined as string | undefined,
+    priority: 'NORMAL',
+    dueDate: undefined,
+    projectId: undefined,
   });
   const [editingTodo, setEditingTodo] = useState<Todo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -86,7 +91,7 @@ const ListComponent = () => {
       const cid = await ipfs.add(JSON.stringify(data));
       setIpfsCid(cid.path);
       console.log("IPFS CID:", cid.path);
-    } catch (error) {
+    } catch {
     } finally {
       setIsLoading(false);
     }
@@ -132,7 +137,7 @@ const ListComponent = () => {
       });
       
 
-    } catch (error) {
+    } catch {
     }
   };
 
@@ -157,7 +162,7 @@ const ListComponent = () => {
       setEditingTodo(null);
       setIsDialogOpen(false);
 
-    } catch (error) {
+    } catch {
     }
   };
 
@@ -176,7 +181,7 @@ const ListComponent = () => {
       setIpfsCid(cid.path);
       console.log("Deleted IPFS CID:", cid.path);
 
-    } catch (error) {
+    } catch {
     }
   };
 
@@ -192,20 +197,20 @@ const ListComponent = () => {
       }
       
       await handleUpdateTodo(updatedTodo);
-    } catch (error) {
+    } catch {
       setTodos(todos.map(t => t.id === todo.id ? t : t));
     }
   };
 
-  const getPriorityColor = (priority: string) => {
+  const getPriorityColor = (priority: 'LOW' | 'NORMAL' | 'HIGH' | 'URGENT') => {
     const colors = {
-      LOW: 'text-gray-500 bg-gray-100',
-      NORMAL: 'text-blue-500 bg-blue-100',
-      HIGH: 'text-yellow-600 bg-yellow-100',
-      URGENT: 'text-red-500 bg-red-100',
+      LOW: "text-gray-500 bg-gray-100",
+      NORMAL: "text-blue-500 bg-blue-100",
+      HIGH: "text-yellow-600 bg-yellow-100",
+      URGENT: "text-red-500 bg-red-100",
     };
-    return colors[priority] || colors.NORMAL;
-  };
+    return colors[priority];
+  };  
 
   const handleEditClick = (todo: Todo) => {
     setEditingTodo(todo);

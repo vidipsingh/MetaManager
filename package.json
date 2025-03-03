@@ -3,17 +3,18 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-  "dev": "NODE_OPTIONS='--max-old-space-size=4096' next dev",
-  "build": "NODE_OPTIONS='--max-old-space-size=4096' next build",
-  "start": "NODE_OPTIONS='--max-old-space-size=4096' NODE_ENV=production ts-node --project tsconfig.server.json server.ts",
-  "lint": "next lint"
-},
+    "dev": "NODE_OPTIONS='--max-old-space-size=4096' next dev",
+    "build": "NODE_OPTIONS='--max-old-space-size=4096' next build",
+    "start": "NODE_OPTIONS='--max-old-space-size=4096' next start",
+    "lint": "next lint"
+  },
   "dependencies": {
     "@emotion/react": "^11.13.3",
     "@emotion/styled": "^11.13.0",
     "@excalidraw/excalidraw": "^0.17.6",
     "@google/generative-ai": "^0.22.0",
     "@heroicons/react": "^2.2.0",
+    "@metamask/providers": "^20.0.0",
     "@mui/icons-material": "^6.1.1",
     "@mui/material": "^6.1.1",
     "@openzeppelin/contracts": "^5.2.0",

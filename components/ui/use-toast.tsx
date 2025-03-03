@@ -1,10 +1,15 @@
-import { Toast, ToastProvider, ToastViewport } from "@/components/ui/toast";
+import { ToastProvider, ToastViewport } from "@/components/ui/toast";
 import { useState } from "react";
 
 export const useToast = () => {
-  const [toasts, setToasts] = useState<any[]>([]);
+  interface Toast {
+    id: string;
+    message: string;
+  }
 
-  const addToast = (toast: any) => {
+  const [toasts, setToasts] = useState<Toast[]>([]);
+
+  const addToast = (toast: Toast) => {
     setToasts((prev) => [...prev, toast]);
   };
 
@@ -17,6 +22,6 @@ export const useToast = () => {
     removeToast,
     ToastProvider,
     ToastViewport,
-    toasts, // You can map through toasts in your component
+    toasts,
   };
 };

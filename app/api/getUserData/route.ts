@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 import jwt from "jsonwebtoken";
 import { getToken } from "next-auth/jwt";
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(req: NextRequest) {
   try {
     const authHeader = req.headers.get("authorization");
@@ -32,7 +34,7 @@ export async function GET(req: NextRequest) {
           },
         },
       });
-    } catch (jwtError) {
+    } catch {
       const session = await getToken({ req });
       if (session?.email) {
         userData = await prisma.user.findUnique({

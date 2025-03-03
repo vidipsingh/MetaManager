@@ -1,7 +1,7 @@
 "use client";
 
 import Header from '@/components/Home/Header';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import Google from "../../../public/images/google_logo.png";
@@ -13,13 +13,15 @@ import LoadingSpinner from '@/components/ui/loading-spinner';
 import { BackgroundBeams } from '@/components/ui/background-beams';
 import { ethers } from 'ethers';
 import Etheruem from "../../../public/images/etheruem.png";
+import { MetaMaskInpageProvider } from "@metamask/providers";
 
-interface LoginResponse {
-  token?: string;
-  error?: string;
+declare global {
+  interface Window {
+    ethereum?: MetaMaskInpageProvider;
+  }
 }
 
-const Login = () => {
+function LoginContent() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -27,7 +29,7 @@ const Login = () => {
   const [showAlert, setShowAlert] = useState(false);
   const [alertSeverity, setAlertSeverity] = useState<'success' | 'error' | 'info'>('info');
   const [isLoading, setIsLoading] = useState(false);
-  
+
   const router = useRouter();
   const searchParams = useSearchParams();
   const { data: session, status } = useSession();
@@ -64,7 +66,7 @@ const Login = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    
+
     try {
       const result = await signIn('credentials', {
         email,
@@ -77,7 +79,7 @@ const Login = () => {
         setMessage("Login successful!");
         setAlertSeverity('success');
         setShowAlert(true);
-        
+
         setTimeout(() => {
           router.push(callbackUrl);
           router.refresh();
@@ -87,7 +89,7 @@ const Login = () => {
         setAlertSeverity('error');
         setShowAlert(true);
       }
-    } catch (error) {
+    } catch {
       setMessage("An error occurred during login");
       setAlertSeverity('error');
       setShowAlert(true);
@@ -102,7 +104,7 @@ const Login = () => {
       await signIn("google", {
         callbackUrl,
       });
-    } catch (error) {
+    } catch {
       setMessage("An error occurred during Google sign in");
       setAlertSeverity('error');
       setShowAlert(true);
@@ -132,14 +134,13 @@ const Login = () => {
       const ensName = await provider.resolveName(address) || address;
       console.log("ENS or Address:", ensName);
 
-      // Fetch CSRF token
       const csrfResponse = await fetch('/api/auth/csrf');
       const { csrfToken } = await csrfResponse.json();
       console.log("CSRF Token:", csrfToken);
 
       const result = await signIn("ethereum", {
         address,
-        csrfToken, // Include CSRF token
+        csrfToken,
         redirect: false,
         callbackUrl,
       });
@@ -184,8 +185,8 @@ const Login = () => {
         <div className="flex justify-center items-center">
           {showAlert && (
             <div className="fixed top-5 left-1/2 w-full transform -translate-x-1/2 z-50">
-              <Alert 
-                severity={alertSeverity} 
+              <Alert
+                severity={alertSeverity}
                 className="w-1/4 mx-auto"
                 onClose={() => setShowAlert(false)}
               >
@@ -194,7 +195,7 @@ const Login = () => {
             </div>
           )}
         </div>
-        
+
         <Header />
         <div className="flex justify-center items-center my-12 z-50 relative">
           <div className='flex justify-between md:w-1/2 lg:w-2/5 text-white px-4'>
@@ -202,11 +203,11 @@ const Login = () => {
               <div>
                 <h1 className='text-5xl font-semibold dark:text-white text-black'>Login</h1>
                 <h1 className='my-3 dark:text-white text-black'>
-                  Don't have an account? 
-                  <Link href="/signup"> 
+                  Don&apos;t have an account?
+                  <Link href="/signup">
                     <span className='dark:text-purple-300 text-purple-800 hover:text-purple-950 underline dark:hover:text-purple-400 cursor-pointer ml-1'>
                       Sign Up
-                    </span> 
+                    </span>
                   </Link>
                 </h1>
               </div>
@@ -214,25 +215,25 @@ const Login = () => {
               <form onSubmit={handleLogin} className='flex flex-col mt-6'>
                 <div className='w-full'>
                   <h1 className='mb-1 dark:text-white/90 text-black'>Email</h1>
-                  <input 
-                    type="email" 
-                    value={email} 
-                    onChange={(e) => setEmail(e.target.value)} 
-                    placeholder='Email' 
-                    required 
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder='Email'
+                    required
                     disabled={isLoading}
                     className='dark:bg-slate-800 border-[1px] dark:text-white text-black border-black rounded-sm py-3 px-2 w-full focus:outline-none disabled:opacity-50'
                   />
                 </div>
-                
+
                 <div className='w-full my-4 relative'>
                   <h1 className='dark:text-white/90 text-black mb-1'>Password</h1>
-                  <input 
-                    type={showPassword ? "text" : "password"} 
-                    value={password} 
-                    onChange={(e) => setPassword(e.target.value)} 
-                    placeholder='********' 
-                    required 
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder='********'
+                    required
                     disabled={isLoading}
                     className='dark:bg-slate-800 dark:text-white text-black border-[1px] border-black rounded-sm py-3 px-2 w-full focus:outline-none disabled:opacity-50'
                   />
@@ -241,15 +242,15 @@ const Login = () => {
                     className="absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer text-white/80"
                     onClick={togglePasswordVisibility}
                   >
-                    {showPassword ? 
-                      <AiFillEyeInvisible size={24} className='mt-6 text-gray-600 dark:text-gray-400'/> : 
+                    {showPassword ?
+                      <AiFillEyeInvisible size={24} className='mt-6 text-gray-600 dark:text-gray-400'/> :
                       <AiFillEye size={24} className='mt-6 text-gray-600 dark:text-gray-400' />
                     }
                   </button>
                 </div>
-                
-                <button 
-                  type='submit' 
+
+                <button
+                  type='submit'
                   disabled={isLoading}
                   className='w-full text-lg dark:bg-purple-900 py-1.5 bg-purple-700 hover:bg-purple-800 text-white rounded-sm dark:hover:bg-purple-950 font-semibold disabled:opacity-50 disabled:cursor-not-allowed'
                 >
@@ -264,29 +265,29 @@ const Login = () => {
               </div>
 
               <div className='w-full flex justify-center items-center'>
-                <button 
+                <button
                   onClick={handleGoogleSignIn}
                   disabled={isLoading}
                   className='w-full py-2 border border-gray-400 rounded-md flex justify-center items-center gap-2 text-black dark:text-white hover:text-white hover:bg-black dark:hover:bg-gray-900 disabled:opacity-50 disabled:cursor-not-allowed'
                 >
-                  <Image 
-                    src={Google} 
-                    width={24} 
-                    height={24} 
+                  <Image
+                    src={Google}
+                    width={24}
+                    height={24}
                     alt='Google logo'
-                    className='rounded-full'  
+                    className='rounded-full'
                   />
                   Sign in with Google
                 </button>
               </div>
 
               <div className='w-full flex justify-center items-center mt-4'>
-                <button 
+                <button
                   onClick={handleEthereumSignIn}
                   disabled={isLoading}
                   className='w-full py-2 border border-gray-400 rounded-md flex justify-center items-center gap-2 text-black dark:text-white hover:text-white hover:bg-black dark:hover:bg-gray-900 disabled:opacity-50 disabled:cursor-not-allowed text-base'
                 >
-                  <Image src={Etheruem}width={30} height={30} alt='' />
+                  <Image src={Etheruem} width={30} height={30} alt='' />
                   Sign in with Ethereum
                 </button>
               </div>
@@ -296,6 +297,12 @@ const Login = () => {
       </div>
     </div>
   );
-};
+}
 
-export default Login;
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<LoadingSpinner size="lg" />}>
+      <LoginContent />
+    </Suspense>
+  );
+}

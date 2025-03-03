@@ -2,7 +2,8 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
-import { Socket, io } from "socket.io-client";
+import { Socket } from "socket.io-client";
+import io from "socket.io-client";
 import { Video, Mic, MicOff, VideoOff, PhoneOff } from "lucide-react";
 
 interface User {
@@ -14,7 +15,7 @@ interface User {
 
 const CallComponent = () => {
   const { data: session, status } = useSession();
-  const [socket, setSocket] = useState<Socket | null>(null);
+  const [, setSocket] = useState<typeof Socket | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [onlineUsers, setOnlineUsers] = useState<string[]>([]);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
@@ -24,7 +25,7 @@ const CallComponent = () => {
   const [isCaller, setIsCaller] = useState(false);
   const [isAudioEnabled, setIsAudioEnabled] = useState(true);
   const [isVideoEnabled, setIsVideoEnabled] = useState(true);
-  const [isCallInProgress, setIsCallInProgress] = useState(false);
+  const [, setIsCallInProgress] = useState(false);
   const [isCallPending, setIsCallPending] = useState(false);
   const [pendingOffer, setPendingOffer] = useState<RTCSessionDescriptionInit | null>(null);
   const [pendingCallerId, setPendingCallerId] = useState<string | null>(null);
@@ -32,7 +33,7 @@ const CallComponent = () => {
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
   const peerConnection = useRef<RTCPeerConnection | null>(null);
-  const socketRef = useRef<Socket | null>(null);
+  const socketRef = useRef<typeof Socket | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -89,7 +90,7 @@ const CallComponent = () => {
         }
       });
 
-      socketInstance.on("call-offer", async ({ offer, callerId }) => {
+      socketInstance.on("call-offer", async ({ offer, callerId }: { offer: RTCSessionDescriptionInit; callerId: string }) => {
         console.log("Received call offer from:", callerId);
         const caller = users.find((u) => u.id === callerId);
         if (caller && mounted) {
@@ -99,7 +100,7 @@ const CallComponent = () => {
         }
       });
 
-      socketInstance.on("call-accepted", async ({ answer }) => {
+      socketInstance.on("call-accepted", async ({ answer }: { answer: RTCSessionDescriptionInit }) => {
         console.log("Call accepted, setting remote description");
         if (peerConnection.current && !peerConnection.current.currentRemoteDescription && mounted) {
           try {
@@ -114,7 +115,7 @@ const CallComponent = () => {
         }
       });
 
-      socketInstance.on("ice-candidate", async ({ candidate }) => {
+      socketInstance.on("ice-candidate", async ({ candidate }: { candidate: RTCIceCandidateInit }) => {
         if (peerConnection.current && peerConnection.current.remoteDescription) {
           try {
             await peerConnection.current.addIceCandidate(new RTCIceCandidate(candidate));
@@ -378,7 +379,7 @@ const CallComponent = () => {
   };
 
   useEffect(() => {
-    socketRef.current?.on("call-offer", async ({ offer, callerId }) => {
+    socketRef.current?.on("call-offer", async ({ offer, callerId }: { offer: RTCSessionDescriptionInit; callerId: string }) => {
       console.log("Received call offer from:", callerId);
       const caller = users.find((u) => u.id === callerId);
       if (caller) {

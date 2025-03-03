@@ -1,13 +1,12 @@
 "use client";
 
 import React from "react";
-import DarkModeOutlinedIcon from "@mui/icons-material/DarkModeOutlined";
 import Link from "next/link";
 import { ModeToggle } from "../Theme/ModeToggle";
 import { useSession } from "next-auth/react";
 
 const Header = () => {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
 
   return (
     <>

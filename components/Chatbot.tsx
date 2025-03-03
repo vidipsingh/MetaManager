@@ -18,9 +18,6 @@ const Chatbot = () => {
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Log API key to debug
-  console.log("Gemini API Key:", process.env.NEXT_PUBLIC_GOOGLE_GEMINI_API_KEY);
-
   // Initialize Gemini API
   const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GOOGLE_GEMINI_API_KEY || "");
   const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
@@ -56,6 +53,7 @@ const Chatbot = () => {
       const result = await model.generateContent({
         contents: [
           {
+            role: "user",
             parts: [{ text: input }],
           },
         ],
@@ -80,6 +78,77 @@ const Chatbot = () => {
       e.preventDefault();
       sendMessage();
     }
+  };
+
+  const renderMarkdown = (text: string) => {
+    let parts: (string | JSX.Element)[] = [text];
+
+    parts = parts.flatMap((part, index) => {
+      if (typeof part !== "string") return [part];
+      return part.split(/(\*\*[^*]+\*\*)/g).map((subPart, subIndex) => {
+        if (subPart.startsWith("**") && subPart.endsWith("**")) {
+          const boldText = subPart.slice(2, -2);
+          return <strong key={`${index}-${subIndex}`}>{boldText}</strong>;
+        }
+        return subPart;
+      });
+    });
+
+    parts = parts.flatMap((part, index) => {
+      if (typeof part !== "string") return [part];
+      return part.split(/(\*[^*]+\*|_[^_]+_)/g).map((subPart, subIndex) => {
+        if (
+          (subPart.startsWith("*") && subPart.endsWith("*")) ||
+          (subPart.startsWith("_") && subPart.endsWith("_"))
+        ) {
+          const italicText = subPart.slice(1, -1);
+          return <em key={`${index}-${subIndex}`}>{italicText}</em>;
+        }
+        return subPart;
+      });
+    });
+
+    parts = parts.flatMap((part, index) => {
+      if (typeof part !== "string") return [part];
+      return part.split(/(`[^`]+`)/g).map((subPart, subIndex) => {
+        if (subPart.startsWith("`") && subPart.endsWith("`")) {
+          const codeText = subPart.slice(1, -1);
+          return (
+            <code
+              key={`${index}-${subIndex}`}
+              className="bg-gray-100 dark:bg-gray-800 px-1 rounded text-sm"
+            >
+              {codeText}
+            </code>
+          );
+        }
+        return subPart;
+      });
+    });
+
+    parts = parts.flatMap((part, index) => {
+      if (typeof part !== "string") return [part];
+      return part.split(/(\[.+?\]\(.+?\))/g).map((subPart, subIndex) => {
+        const linkMatch = subPart.match(/\[(.+?)\]\((.+?)\)/);
+        if (linkMatch) {
+          const [, linkText, url] = linkMatch;
+          return (
+            <a
+              key={`${index}-${subIndex}`}
+              href={url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:underline"
+            >
+              {linkText}
+            </a>
+          );
+        }
+        return subPart;
+      });
+    });
+
+    return parts;
   };
 
   return (
@@ -151,7 +220,7 @@ const Chatbot = () => {
                         : "bg-gray-200 dark:bg-gray-700 text-black dark:text-white"
                     } ${isFullScreen ? "text-lg p-3" : "text-base"}`}
                   >
-                    {msg.content}
+                    {renderMarkdown(msg.content)}
                   </div>
                 </div>
               ))

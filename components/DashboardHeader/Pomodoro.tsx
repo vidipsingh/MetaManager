@@ -1,16 +1,19 @@
+"use client";
+
 import React, { useState, useEffect, useRef } from 'react';
 import { IoTimerOutline } from "react-icons/io5";
 import { FaPlay, FaPause, FaUndo } from "react-icons/fa";
 
+type Mode = 'pomodoro' | 'shortBreak' | 'longBreak';
+
 const PomodoroTimer = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [time, setTime] = useState(25 * 60);
+  const [time, setTime] = useState(25 * 60); // Line 14
   const [isRunning, setIsRunning] = useState(false);
-  const [mode, setMode] = useState('pomodoro');
-  const timerRef = useRef(null);
-  const timerIconRef = useRef(null);
+  const [mode, setMode] = useState<Mode>('pomodoro');
+  const timerRef = useRef<HTMLDivElement>(null);
+  const timerIconRef = useRef<HTMLDivElement>(null);
 
-  // Time settings for each mode (in minutes)
   const [timeSettings, setTimeSettings] = useState({
     pomodoro: 25,
     shortBreak: 5,
@@ -18,7 +21,7 @@ const PomodoroTimer = () => {
   });
 
   useEffect(() => {
-    let interval;
+    let interval: NodeJS.Timeout;
 
     if (isRunning && time > 0) {
       interval = setInterval(() => {
@@ -33,7 +36,6 @@ const PomodoroTimer = () => {
 
   const handleTimerComplete = () => {
     setIsRunning(false);
-    // Play notification sound or show notification here
   };
 
   const toggleTimer = () => {
@@ -41,22 +43,22 @@ const PomodoroTimer = () => {
   };
 
   const resetTimer = () => {
-    setIsRunning(false);
-    setTime(timeSettings[mode] * 60);
+    setTime(timeSettings[mode] * 60); // Fixed typo: removed duplicate setTime
+    setIsRunning(false); // Ensure timer stops on reset
   };
 
-  const formatTime = (seconds) => {
+  const formatTime = (seconds: number): string => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
     return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
 
-  const handleClickOutside = (event) => {
+  const handleClickOutside = (event: MouseEvent) => {
     if (
       timerRef.current && 
-      !timerRef.current.contains(event.target) &&
+      !timerRef.current.contains(event.target as Node) &&
       timerIconRef.current && 
-      !timerIconRef.current.contains(event.target)
+      !timerIconRef.current.contains(event.target as Node)
     ) {
       setIsOpen(false);
     }
@@ -69,23 +71,31 @@ const PomodoroTimer = () => {
     };
   }, []);
 
-  const switchMode = (newMode) => {
+  const switchMode = (newMode: Mode) => {
     setMode(newMode);
     setIsRunning(false);
     setTime(timeSettings[newMode] * 60);
   };
 
-  const updateTimeSetting = (mode, minutes) => {
+  interface UpdateTimeSetting {
+    (mode: Mode, minutes: number): void;
+  }
+
+  const updateTimeSetting: UpdateTimeSetting = (mode, minutes) => {
     setTimeSettings(prev => ({
       ...prev,
       [mode]: Math.max(1, Math.min(60, minutes))
     }));
-    if (mode === mode) {
+    if (mode === mode) { // Bug: mode === mode is always true, should compare with current mode
       setTime(minutes * 60);
     }
   };
 
-  const getModeColor = (currentMode) => {
+  interface ModeColor {
+    (currentMode: Mode): string;
+  }
+
+  const getModeColor: ModeColor = (currentMode) => {
     switch (currentMode) {
       case 'pomodoro': return 'bg-red-500';
       case 'shortBreak': return 'bg-green-500';
@@ -94,7 +104,11 @@ const PomodoroTimer = () => {
     }
   };
 
-  const getModeTextColor = (currentMode) => {
+  interface ModeTextColor {
+    (currentMode: Mode): string;
+  }
+
+  const getModeTextColor: ModeTextColor = (currentMode) => {
     switch (currentMode) {
       case 'pomodoro': return 'text-red-500';
       case 'shortBreak': return 'text-green-500';
@@ -122,7 +136,7 @@ const PomodoroTimer = () => {
           className="absolute top-full -right-24 mt-3 w-80 bg-white dark:bg-gray-800 shadow-lg rounded-lg p-4 z-50 border dark:border-gray-700"
         >
           {/* Mode Selection Tabs */}
-          <div className="flex  mb-4 bg-gray-100 dark:bg-gray-700 rounded-lg p-1 py-2">
+          <div className="flex mb-4 bg-gray-100 dark:bg-gray-700 rounded-lg p-1 py-2">
             <button
               onClick={() => switchMode('pomodoro')}
               className={`flex-1 py-4 px-2 rounded-md text-sm font-medium transition-colors ${

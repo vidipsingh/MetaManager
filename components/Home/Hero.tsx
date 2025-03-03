@@ -12,7 +12,7 @@ import { useSession } from 'next-auth/react';
 
 const Hero = () => {
   const texts = [
-    "Web3 Platform for Decentralized Workflows",
+    "Advanced Platform for Streamlined Workflows",
     "Enhancing productivity with safe collaboration.",
     "Enabling teams with decentralized solutions.",
   ];
@@ -25,7 +25,7 @@ const Hero = () => {
   const pauseDuration = 1500;
   const stopAt = 2;
 
-  const { data: session, status } = useSession();
+  const { status } = useSession();
 
   useEffect(() => {
     const handleTyping = () => {

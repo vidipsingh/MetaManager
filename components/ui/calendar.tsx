@@ -10,7 +10,6 @@ export type CalendarProps = React.ComponentProps<typeof DayPicker>;
 
 function Calendar({
   className,
-  classNames,
   showOutsideDays = true,
   ...props
 }: CalendarProps) {
@@ -63,12 +62,13 @@ function Calendar({
         day_hidden: "invisible",
       }}
       components={{
-        IconLeft: () => (
-          <ChevronLeft className="h-4 w-4 stroke-current text-black dark:text-white" />
-        ),
-        IconRight: () => (
-          <ChevronRight className="h-4 w-4 stroke-current text-black dark:text-white" />
-        ),
+        Chevron: ({ orientation }) => {
+          return orientation === "left" ? (
+            <ChevronLeft className="h-4 w-4 stroke-current text-black dark:text-white" />
+          ) : (
+            <ChevronRight className="h-4 w-4 stroke-current text-black dark:text-white" />
+          );
+        },
       }}
       {...props}
     />

@@ -6,7 +6,7 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import { ethers } from "ethers";
 
-export const authOptions: AuthOptions = {
+const authOptions: AuthOptions = {
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,

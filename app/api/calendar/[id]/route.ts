@@ -1,7 +1,8 @@
+// app/api/calendar/[id]/route.ts
 import { prisma } from '@/lib/prisma';
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '../../auth/[...nextauth]/route';
+import { authOptions } from '@/lib/auth';
 
 export async function PUT(
   req: Request,
@@ -19,7 +20,7 @@ export async function PUT(
       data,
     });
     return NextResponse.json(event);
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to update event' }, { status: 500 });
   }
 }
@@ -38,7 +39,7 @@ export async function DELETE(
       where: { id: params.id },
     });
     return NextResponse.json({ success: true });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to delete event' }, { status: 500 });
   }
 }

@@ -7,9 +7,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { IoChatbubbleEllipsesOutline, IoCalendarOutline, IoCallOutline } from "react-icons/io5";
 import { TbCheckbox } from "react-icons/tb";
-import { HiOutlineUserGroup } from "react-icons/hi";
 import { Users, ListTodo, Calendar } from "lucide-react";
-import { format } from "date-fns";
 
 interface Todo {
   id: string;
@@ -35,6 +33,7 @@ interface UserData {
   email?: string;
   todos: Todo[];
   events: CalendarEvent[];
+  organizationId?: string;
 }
 
 interface TeamComponentProps {
@@ -60,14 +59,14 @@ const TeamComponent: React.FC<TeamComponentProps> = ({ onChatSelect }) => {
         if (response.ok) {
           const data = await response.json();
           const filteredUsers = data.filter(
-            (user: any) =>
+            (user: UserData) =>
               user.id !== session?.user?.id &&
               user.organizationId === session?.user?.organizationId
           );
 
           // Fetch todos and events for each user
           const usersWithData = await Promise.all(
-            filteredUsers.map(async (user: any) => {
+            filteredUsers.map(async (user: UserData) => {
               const [todosRes, eventsRes] = await Promise.all([
                 fetch(`/api/todos?userId=${user.id}`, {
                   headers: { Authorization: `Bearer ${session?.customToken}` },
@@ -79,7 +78,7 @@ const TeamComponent: React.FC<TeamComponentProps> = ({ onChatSelect }) => {
 
               const todosData = todosRes.ok ? await todosRes.json() : [];
               const eventsData = eventsRes.ok
-                ? (await eventsRes.json()).map((event: any) => ({
+                ? (await eventsRes.json()).map((event: CalendarEvent) => ({
                     ...event,
                     startTime: new Date(event.startTime),
                     endTime: new Date(event.endTime),
@@ -128,7 +127,7 @@ const TeamComponent: React.FC<TeamComponentProps> = ({ onChatSelect }) => {
         });
         if (response.ok) {
           const data = await response.json();
-          const formattedEvents = data.map((event: any) => ({
+          const formattedEvents = data.map((event: CalendarEvent) => ({
             ...event,
             startTime: new Date(event.startTime),
             endTime: new Date(event.endTime),

@@ -169,7 +169,7 @@ const SelectOrganization = () => {
         <div>
           <h2 className="text-lg dark:text-white text-black mb-2">Join Existing Organization</h2>
           {orgs.length > 0 ? (
-            orgs.map((org: any) => (
+            orgs.map((org: { id: string; name: string }) => (
               <Button
                 key={org.id}
                 onClick={() => handleSelectOrg(org.id)}

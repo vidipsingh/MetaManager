@@ -1,25 +1,27 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
+import dynamic from "next/dynamic";
 import Header from "@/components/DashboardHeader/Header";
-import Chatbot from "@/components/Chatbot";
-import WhiteboardComponent from "@/components/WhiteboardComponent";
 import { CiSearch } from "react-icons/ci";
 import { RxDashboard } from "react-icons/rx";
 import { IoChatbubbleEllipsesOutline, IoCalendarOutline, IoCallOutline } from "react-icons/io5";
 import { HiOutlineUserGroup } from "react-icons/hi";
 import { TbCheckbox } from "react-icons/tb";
 import { FaChalkboard } from "react-icons/fa";
-import DashboardContent from "@/components/DashboardContent";
-import ChatComponent from "@/components/ChatComponent";
-import TeamComponent from "@/components/TeamComponent";
-import CallComponent from "@/components/CallComponent";
-import ListComponent from "@/components/ListComponent";
-import CalendarComponent from "@/components/CalendarComponent";
 
-export default function Dashboard() {
+const Chatbot = dynamic(() => import("@/components/Chatbot"), { ssr: false });
+const WhiteboardComponent = dynamic(() => import("@/components/WhiteboardComponent"), { ssr: false });
+const DashboardContent = dynamic(() => import("@/components/DashboardContent"), { ssr: false });
+const ChatComponent = dynamic(() => import("@/components/ChatComponent"), { ssr: false });
+const TeamComponent = dynamic(() => import("@/components/TeamComponent"), { ssr: false });
+const CallComponent = dynamic(() => import("@/components/CallComponent"), { ssr: false });
+const ListComponent = dynamic(() => import("@/components/ListComponent"), { ssr: false });
+const CalendarComponent = dynamic(() => import("@/components/CalendarComponent"), { ssr: false });
+
+function DashboardContentWrapper() {
   const [isLoading, setIsLoading] = useState(true);
   const [userData, setUserData] = useState<{
     name?: string;
@@ -102,7 +104,7 @@ export default function Dashboard() {
           if (usersRes.ok) {
             const allUsers = await usersRes.json();
             const filteredUsers = allUsers.filter(
-              (user: any) =>
+              (user: { id: string; organizationId: string }) =>
                 user.id !== session?.user?.id &&
                 user.organizationId === session?.user?.organizationId
             );
@@ -276,8 +278,19 @@ export default function Dashboard() {
         </main>
       </div>
 
-      {/* Chatbot Component */}
       <Chatbot />
     </div>
   );
-};
+}
+
+export default function Dashboard() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-black/95">
+        <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-purple-900"></div>
+      </div>
+    }>
+      <DashboardContentWrapper />
+    </Suspense>
+  );
+}

@@ -62,7 +62,7 @@ const DashboardContent = ({ onTodoClick, teamMembersCount }: Props) => {
         });
         if (response.ok) {
           const data = await response.json();
-          const formattedEvents = data.map((event: any) => ({
+          const formattedEvents = data.map((event: CalendarEvent) => ({
             ...event,
             startTime: new Date(event.startTime),
             endTime: new Date(event.endTime),
@@ -101,14 +101,14 @@ const DashboardContent = ({ onTodoClick, teamMembersCount }: Props) => {
     }).length;
   };
 
-  const getPriorityColor = (priority: string) => {
+  const getPriorityColor = (priority: 'LOW' | 'NORMAL' | 'HIGH' | 'URGENT') => {
     const colors = {
       LOW: "text-gray-500 bg-gray-100",
       NORMAL: "text-blue-500 bg-blue-100",
       HIGH: "text-yellow-600 bg-yellow-100",
       URGENT: "text-red-500 bg-red-100",
     };
-    return colors[priority] || colors.NORMAL;
+    return colors[priority];
   };
 
   if (status === "loading" || isLoading) {

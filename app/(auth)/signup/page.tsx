@@ -59,7 +59,7 @@ const SignUp = () => {
           setShowAlert(true);
         }
       }
-    } catch (error) {
+    } catch {
       setMessage("An error occurred during sign-up");
       setAlertSeverity("error");
       setShowAlert(true);
@@ -85,7 +85,7 @@ const SignUp = () => {
         setAlertSeverity("error");
         setShowAlert(true);
       }
-    } catch (error) {
+    } catch {
       setMessage("An error occurred during Google sign-up");
       setAlertSeverity("error");
       setShowAlert(true);
@@ -102,7 +102,7 @@ const SignUp = () => {
       }
 
       const provider = new ethers.BrowserProvider(window.ethereum);
-      const accounts = await provider.send("eth_requestAccounts", []);
+      // const accounts = await provider.send("eth_requestAccounts", []);
       const signer = await provider.getSigner();
       const address = await signer.getAddress();
       const ensName = (await provider.resolveName(address)) || address;
@@ -146,7 +146,6 @@ const SignUp = () => {
     }
   }, [showAlert]);
 
-  // Redirect to /login if already authenticated
   useEffect(() => {
     if (status === "authenticated") {
       router.push("/select-org");

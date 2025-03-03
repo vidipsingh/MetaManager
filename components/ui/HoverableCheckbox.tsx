@@ -1,7 +1,12 @@
 import { Check } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
 
-const HoverableCheckbox = ({ checked, onCheckedChange }) => {
+interface HoverableCheckboxProps {
+  checked: boolean;
+  onCheckedChange: (checked: boolean) => void;
+}
+
+const HoverableCheckbox = ({ checked, onCheckedChange }: HoverableCheckboxProps) => {
   return (
     <div className="relative group">
       <Checkbox

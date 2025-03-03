@@ -2,7 +2,8 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
-import { Socket, io } from "socket.io-client";
+import { Socket } from "socket.io-client";
+import io from "socket.io-client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -32,7 +33,7 @@ interface ChatComponentProps {
 
 const ChatComponent: React.FC<ChatComponentProps> = ({ initialSelectedUserId }) => {
   const { data: session, status } = useSession();
-  const [socket, setSocket] = useState<Socket | null>(null);
+  const [socket, setSocket] = useState<typeof Socket | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [allUsers, setAllUsers] = useState<User[]>([]);
@@ -102,13 +103,11 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ initialSelectedUserId }) 
     socketInstance.on("new-message", (message: Message) => {
       console.log("Received new-message:", message);
       setMessages((prev) => {
-        // Prevent duplicates
         if (prev.some((m) => m.id === message.id)) {
           console.log("Duplicate message ignored:", message.id);
           return prev;
         }
 
-        // Add message if it involves the current user and selected user
         if (
           (message.senderId === session.user.id && message.receiverId === selectedUserId) ||
           (message.senderId === selectedUserId && message.receiverId === session.user.id)
@@ -128,7 +127,6 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ initialSelectedUserId }) 
     };
   }, [session, selectedUserId]);
 
-  // Load conversation when selectedUserId changes
   useEffect(() => {
     const loadConversation = async () => {
       if (!session?.user?.id || !selectedUserId) return;
@@ -168,7 +166,7 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ initialSelectedUserId }) 
     if (!newMessage.trim() || !session?.user?.id || !selectedUserId || !conversationId) return;
 
     const messageData: Message = {
-      id: Date.now().toString(), // Temporary ID
+      id: Date.now().toString(),
       content: newMessage,
       senderId: session.user.id,
       receiverId: selectedUserId,

@@ -1,15 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
-import { getServerSession } from "next-auth";
+// import { getServerSession } from "next-auth";
 import jwt from "jsonwebtoken";
 
 const prisma = new PrismaClient();
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
     const organizations = await prisma.organization.findMany();
     return NextResponse.json(organizations);
-  } catch (error) {
+  } catch{
     return NextResponse.json({ error: "Failed to fetch organizations" }, { status: 500 });
   }
 }
@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
   let decoded;
   try {
     decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string };
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Invalid token" }, { status: 401 });
   }
 
@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json(organization);
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Failed to create organization" }, { status: 500 });
   }
 }
