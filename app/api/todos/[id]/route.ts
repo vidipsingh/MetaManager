@@ -57,3 +57,66 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Failed to create todo" }, { status: 500 });
   }
 }
+
+export async function PUT(request: Request) {
+  try {
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const url = new URL(request.url);
+    const id = url.pathname.split("/").pop();
+
+    if (!id) {
+      return NextResponse.json({ error: "Todo ID is required" }, { status: 400 });
+    }
+
+    const body = await request.json();
+    const { title, description, priority, dueDate, projectId, completed } = body;
+
+    const updatedTodo = await prisma.todo.update({
+      where: { id },
+      data: {
+        title,
+        description,
+        priority,
+        dueDate: dueDate ? new Date(dueDate) : null,
+        projectId: projectId || null,
+        completed: completed !== undefined ? completed : undefined,
+      },
+    });
+
+    return NextResponse.json(updatedTodo, { status: 200 });
+  } catch (error) {
+    console.error("PUT /api/todos error:", error);
+    return NextResponse.json({ error: "Failed to update todo" }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const url = new URL(request.url);
+    const id = url.pathname.split("/").pop();
+
+    if (!id) {
+      return NextResponse.json({ error: "Todo ID is required" }, { status: 400 });
+    }
+
+    await prisma.todo.delete({
+      where: { id },
+    });
+
+    return NextResponse.json({ message: "Todo deleted successfully" }, { status: 200 });
+  } catch (error) {
+    console.error("DELETE /api/todos error:", error);
+    return NextResponse.json({ error: "Failed to delete todo" }, { status: 500 });
+  }
+}
