@@ -2,9 +2,13 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { getToken } from 'next-auth/jwt'
-import { NextRequestWithAuth, withAuth } from 'next-auth/middleware'
 
 async function middleware(request: NextRequest) {
+  const publicFiles = ['/favicon.ico', '/robots.txt', '/sitemap.xml'];
+  if (publicFiles.some(file => request.nextUrl.pathname === file)) {
+    return NextResponse.next();
+  }
+
   // Handle socket.io routes first
   if (request.nextUrl.pathname.startsWith('/api/socketio')) {
     const response = NextResponse.next();
@@ -50,7 +54,6 @@ export default middleware
 
 export const config = {
   matcher: [
-    '/api/socketio/:path*',
     '/dashboard/:path*', 
     '/login',
     '/signup'
