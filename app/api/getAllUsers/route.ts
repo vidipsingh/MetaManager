@@ -18,7 +18,13 @@ export async function GET() {
         },
       },
     });
-    return NextResponse.json(users);
+
+    const sanitizedUsers = users.map((user) => ({
+      ...user,
+      name: user.name || user.email || `User_${user.id.slice(0, 4)}`,
+    }));
+
+    return NextResponse.json(sanitizedUsers);
   } catch (error) {
     console.error("Error fetching users:", error);
     return NextResponse.json({ error: "Failed to fetch users" }, { status: 500 });

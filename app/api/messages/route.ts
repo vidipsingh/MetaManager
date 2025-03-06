@@ -1,28 +1,20 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import jwt from 'jsonwebtoken';
+import { getToken } from 'next-auth/jwt';
 
 export async function POST(req: Request) {
   try {
-    const authHeader = req.headers.get('authorization');
-    if (!authHeader) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const token = authHeader.split(' ')[1];
-    if (!token) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const secret = process.env.NEXTAUTH_SECRET || '';
-    const decodedToken = jwt.verify(token, secret) as { sub: string };
-
-    if (!decodedToken?.sub) {
+    const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
+    if (!token?.sub) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const messageData = await req.json();
     const { content, senderId, receiverId, conversationId } = messageData;
+
+    if (senderId !== token.sub) {
+      return NextResponse.json({ error: 'Invalid sender ID' }, { status: 403 });
+    }
 
     const message = await prisma.message.create({
       data: {

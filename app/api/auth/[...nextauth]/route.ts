@@ -11,6 +11,14 @@ const authOptions: AuthOptions = {
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      authorization: {
+        params: {
+          scope: "openid profile email",
+          prompt: "consent",
+          access_type: "offline",
+          response_type: "code",
+        },
+      },
     }),
     CredentialsProvider({
       name: "credentials",
@@ -58,16 +66,25 @@ const authOptions: AuthOptions = {
       name: "Ethereum",
       credentials: {
         address: { label: "Ethereum Address", type: "text" },
+        signature: { label: "Signature", type: "text" },
       },
       async authorize(credentials) {
         console.log("Ethereum authorize called with:", credentials);
-        if (!credentials?.address) {
-          console.log("No address provided");
-          throw new Error("No wallet address provided");
+        if (!credentials?.address || !credentials?.signature) {
+          console.log("No address or signature provided");
+          throw new Error("No wallet address or signature provided");
         }
 
         const address = ethers.getAddress(credentials.address);
-        console.log("Normalized address:", address);
+        const recoveredAddress = ethers.verifyMessage(
+          "Sign in to MetaManager",
+          credentials.signature
+        );
+
+        if (recoveredAddress.toLowerCase() !== address.toLowerCase()) {
+          console.log("Signature verification failed");
+          throw new Error("Invalid signature");
+        }
 
         let user = await prisma.user.findFirst({
           where: { ethAddress: address },
@@ -191,12 +208,12 @@ const authOptions: AuthOptions = {
           { expiresIn: "24h" }
         );
 
-        session.customToken = customToken;
+        session.accessToken = customToken;
       }
       return session;
     },
   },
-  debug: false,
+  debug: process.env.NODE_ENV !== "production",
 };
 
 const handler = NextAuth(authOptions);

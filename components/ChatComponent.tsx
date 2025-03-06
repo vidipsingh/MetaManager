@@ -2,7 +2,6 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
-import { Socket } from "socket.io-client";
 import io from "socket.io-client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -33,7 +32,7 @@ interface ChatComponentProps {
 
 const ChatComponent: React.FC<ChatComponentProps> = ({ initialSelectedUserId }) => {
   const { data: session, status } = useSession();
-  const [socket, setSocket] = useState<typeof Socket | null>(null);
+  const [socket, setSocket] = useState<any>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [allUsers, setAllUsers] = useState<User[]>([]);
@@ -60,7 +59,7 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ initialSelectedUserId }) 
       try {
         const res = await fetch("/api/getAllUsers", {
           headers: {
-            Authorization: `Bearer ${session?.customToken}`,
+            Authorization: `Bearer ${session?.accessToken}`,
           },
         });
         if (res.ok) {
@@ -91,7 +90,7 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ initialSelectedUserId }) 
     const socketInstance = io("http://localhost:3000", {
       path: "/api/socketio",
       auth: {
-        token: session?.customToken,
+        token: session?.accessToken,
       },
     });
 
@@ -136,7 +135,7 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ initialSelectedUserId }) 
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${session?.customToken}`,
+            Authorization: `Bearer ${session?.accessToken}`,
           },
           body: JSON.stringify({
             userId: session.user.id,
@@ -179,7 +178,7 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ initialSelectedUserId }) 
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${session?.customToken}`,
+          Authorization: `Bearer ${session?.accessToken}`,
         },
         body: JSON.stringify(messageData),
       });
@@ -187,12 +186,10 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ initialSelectedUserId }) 
       if (response.ok) {
         const savedMessage = await response.json();
         console.log("Message saved:", savedMessage);
-        // Add message locally for sender immediately
         setMessages((prev) => {
           if (prev.some((m) => m.id === savedMessage.id)) return prev;
           return [...prev, savedMessage];
         });
-        // Emit to socket for real-time update
         socket?.emit("send-message", savedMessage);
         setNewMessage("");
       } else {
@@ -211,7 +208,7 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ initialSelectedUserId }) 
 
   return (
     <div className="flex h-screen border-l-[1.5px] border-gray-300 dark:border-gray-500">
-      <div className="w-1/3 bg-gray-50 dark:bg-slate-900 border-r">
+      <div className="w-1/3 bg-gray-50 dark:bg-slate-900 border-r sm:w-1/4 md:w-1/5">
         <ScrollArea className="h-full">
           {otherUsers.length === 0 ? (
             <p className="p-4 text-center text-gray-500">No other users in your organization.</p>
@@ -227,10 +224,10 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ initialSelectedUserId }) 
                 <div className="flex items-center gap-2">
                   <Avatar className="w-8 h-8">
                     <AvatarFallback className="bg-purple-600 text-white">
-                      {user.name?.[0] || user.email?.[0] || "?"}
+                      {user.name?.[0] || user.email?.[0] || user.id?.slice(0, 1) || "?"}
                     </AvatarFallback>
                   </Avatar>
-                  <span className="font-semibold text-sm">{user.name || user.email}</span>
+                  <span className="font-semibold text-sm">{user.name || user.email || `User_${user.id.slice(0, 4)}`}</span>
                 </div>
               </div>
             ))
@@ -244,7 +241,10 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ initialSelectedUserId }) 
             <div className="space-y-4 min-h-full">
               {messages.map((message) => {
                 const isCurrentUser = message.senderId === session?.user?.id;
-                const user = allUsers.find((u) => u.id === message.senderId);
+                const user = allUsers.find((u) => u.id === message.senderId) || {
+                  name: `User_${message.senderId.slice(0, 4)}`,
+                  email: undefined,
+                };
 
                 return (
                   <div
@@ -256,7 +256,7 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ initialSelectedUserId }) 
                     {!isCurrentUser && (
                       <Avatar className="w-8 h-8">
                         <AvatarFallback className="bg-purple-600 text-white">
-                          {user?.name?.[0] || user?.email?.[0] || "?"}
+                          {user.name?.[0] || user.email?.[0] || user.id?.slice(0, 1) || "?"}
                         </AvatarFallback>
                       </Avatar>
                     )}
@@ -270,7 +270,7 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ initialSelectedUserId }) 
                     {isCurrentUser && (
                       <Avatar className="w-8 h-8">
                         <AvatarFallback className="bg-blue-600 text-white">
-                          {user?.name?.[0] || user?.email?.[0] || "?"}
+                          {user.name?.[0] || user.email?.[0] || user.id?.slice(0, 1) || "?"}
                         </AvatarFallback>
                       </Avatar>
                     )}
@@ -289,7 +289,7 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ initialSelectedUserId }) 
               className="flex-grow"
               disabled={!selectedUserId}
             />
-            <Button type="submit" className="flex-shrink-0" disabled={!selectedUserId}>
+            <Button type="submit" className="flex-shrink-0 dark:text-white" disabled={!selectedUserId}>
               Send
             </Button>
           </form>

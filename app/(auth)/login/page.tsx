@@ -33,7 +33,7 @@ function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { data: session, status } = useSession();
-  const callbackUrl = searchParams.get('from') || '/dashboard';
+  const callbackUrl = searchParams.get('from') || 'https://metamanager-gamma.vercel.app/dashboard';
 
   useEffect(() => {
     if (session && status === 'authenticated') {
@@ -126,13 +126,10 @@ function LoginContent() {
       console.log("ethers version:", ethers.version);
       console.log("Attempting to connect to wallet...");
       const provider = new ethers.BrowserProvider(window.ethereum);
-      const accounts = await provider.send("eth_requestAccounts", []);
-      console.log("Accounts:", accounts);
       const signer = await provider.getSigner();
       const address = await signer.getAddress();
       console.log("Address:", address);
-      const ensName = await provider.resolveName(address) || address;
-      console.log("ENS or Address:", ensName);
+      const signature = await signer.signMessage("Sign in to MetaManager");
 
       const csrfResponse = await fetch('/api/auth/csrf');
       const { csrfToken } = await csrfResponse.json();
@@ -140,6 +137,7 @@ function LoginContent() {
 
       const result = await signIn("ethereum", {
         address,
+        signature,
         csrfToken,
         redirect: false,
         callbackUrl,
@@ -148,7 +146,7 @@ function LoginContent() {
       console.log("SignIn Result:", result);
 
       if (!result?.error) {
-        setMessage(`Logged in with ${ensName}`);
+        setMessage(`Logged in with ${address}`);
         setAlertSeverity('success');
         setShowAlert(true);
         setTimeout(() => {
@@ -156,7 +154,7 @@ function LoginContent() {
           router.refresh();
         }, 1000);
       } else {
-        setMessage(result.error);
+        setMessage(result?.error || "Failed to sign in with Ethereum");
         setAlertSeverity('error');
         setShowAlert(true);
       }
@@ -203,7 +201,7 @@ function LoginContent() {
               <div>
                 <h1 className='text-5xl font-semibold dark:text-white text-black'>Login</h1>
                 <h1 className='my-3 dark:text-white text-black'>
-                  Don&apos;t have an account?
+                  Don't have an account?
                   <Link href="/signup">
                     <span className='dark:text-purple-300 text-purple-800 hover:text-purple-950 underline dark:hover:text-purple-400 cursor-pointer ml-1'>
                       Sign Up

@@ -10,13 +10,13 @@ async function middleware(request: NextRequest) {
   }
 
   // Handle socket.io routes first
-  if (request.nextUrl.pathname.startsWith('/api/socketio')) {
-    const response = NextResponse.next();
-    response.headers.append('Access-Control-Allow-Origin', '*');
-    response.headers.append('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    response.headers.append('Access-Control-Allow-Headers', 'Content-Type');
-    return response;
-  }
+  // if (request.nextUrl.pathname.startsWith('/api/socketio')) {
+  //   const response = NextResponse.next();
+  //   response.headers.append('Access-Control-Allow-Origin', '*');
+  //   response.headers.append('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  //   response.headers.append('Access-Control-Allow-Headers', 'Content-Type');
+  //   return response;
+  // }
 
   // Handle authentication for protected routes
   if (request.nextUrl.pathname.startsWith('/dashboard') ||

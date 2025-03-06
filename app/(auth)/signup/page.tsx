@@ -47,6 +47,7 @@ const SignUp = () => {
           email,
           password,
           redirect: false,
+          callbackUrl: "https://metamanager-gamma.vercel.app/select-org",
         });
 
         if (signInResult?.ok) {
@@ -69,7 +70,7 @@ const SignUp = () => {
   const handleGoogleSignUp = async () => {
     try {
       const result = await signIn("google", {
-        callbackUrl: "/select-org",
+        callbackUrl: "https://metamanager-gamma.vercel.app/select-org",
         redirect: false,
       });
 
@@ -102,23 +103,23 @@ const SignUp = () => {
       }
 
       const provider = new ethers.BrowserProvider(window.ethereum);
-      // const accounts = await provider.send("eth_requestAccounts", []);
       const signer = await provider.getSigner();
       const address = await signer.getAddress();
-      const ensName = (await provider.resolveName(address)) || address;
+      const signature = await signer.signMessage("Sign up to MetaManager");
 
       const csrfResponse = await fetch("/api/auth/csrf");
       const { csrfToken } = await csrfResponse.json();
 
       const result = await signIn("ethereum", {
         address,
+        signature,
         csrfToken,
         redirect: false,
-        callbackUrl: "/select-org",
+        callbackUrl: "https://metamanager-gamma.vercel.app/select-org",
       });
 
       if (!result?.error && result?.ok) {
-        setMessage(`Signed up with ${ensName}`);
+        setMessage(`Signed up with ${address}`);
         setAlertSeverity("success");
         setShowAlert(true);
         setTimeout(() => {
