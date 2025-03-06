@@ -201,7 +201,7 @@ function LoginContent() {
               <div>
                 <h1 className='text-5xl font-semibold dark:text-white text-black'>Login</h1>
                 <h1 className='my-3 dark:text-white text-black'>
-                  Don't have an account?
+                  Don&apos;t have an account?
                   <Link href="/signup">
                     <span className='dark:text-purple-300 text-purple-800 hover:text-purple-950 underline dark:hover:text-purple-400 cursor-pointer ml-1'>
                       Sign Up

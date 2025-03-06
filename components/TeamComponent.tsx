@@ -53,7 +53,7 @@ const TeamComponent: React.FC<TeamComponentProps> = ({ onChatSelect }) => {
         console.log("Fetching users for TeamComponent, session:", session);
         const response = await fetch("/api/getAllUsers", {
           headers: {
-            Authorization: `Bearer ${session?.customToken}`,
+            Authorization: `Bearer ${session?.accessToken}`,
           },
         });
         if (response.ok) {
@@ -69,10 +69,10 @@ const TeamComponent: React.FC<TeamComponentProps> = ({ onChatSelect }) => {
             filteredUsers.map(async (user: UserData) => {
               const [todosRes, eventsRes] = await Promise.all([
                 fetch(`/api/todos?userId=${user.id}`, {
-                  headers: { Authorization: `Bearer ${session?.customToken}` },
+                  headers: { Authorization: `Bearer ${session?.accessToken}` },
                 }),
                 fetch(`/api/calendar?userId=${user.id}`, {
-                  headers: { Authorization: `Bearer ${session?.customToken}` },
+                  headers: { Authorization: `Bearer ${session?.accessToken}` },
                 }),
               ]);
 
@@ -106,7 +106,7 @@ const TeamComponent: React.FC<TeamComponentProps> = ({ onChatSelect }) => {
       try {
         const response = await fetch("/api/todos", {
           headers: {
-            Authorization: `Bearer ${session?.customToken}`,
+            Authorization: `Bearer ${session?.accessToken}`,
           },
         });
         if (response.ok) {
@@ -122,7 +122,7 @@ const TeamComponent: React.FC<TeamComponentProps> = ({ onChatSelect }) => {
       try {
         const response = await fetch("/api/calendar", {
           headers: {
-            Authorization: `Bearer ${session?.customToken}`,
+            Authorization: `Bearer ${session?.accessToken}`,
           },
         });
         if (response.ok) {

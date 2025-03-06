@@ -150,7 +150,7 @@ export const authOptions: AuthOptions = {
             user.id = newUser.id;
             user.organizationId = newUser.organizationId;
           } else {
-            user.id = existingUser.id;
+            user.id = existingUser.id; // Fixed: Removed incorrect `existingUser.organizationId`
             user.organizationId = existingUser.organizationId;
           }
         } catch (error) {
@@ -181,7 +181,7 @@ export const authOptions: AuthOptions = {
         session.user.ethAddress = token.ethAddress as string | undefined;
         session.user.organizationId = token.organizationId as string | undefined;
 
-        const customToken = jwt.sign(
+        const accessToken = jwt.sign(
           {
             userId: token.id,
             email: session.user.email,
@@ -192,7 +192,7 @@ export const authOptions: AuthOptions = {
           { expiresIn: "24h" }
         );
 
-        session.customToken = customToken;
+        session.accessToken = accessToken; // Updated to accessToken
       }
       return session;
     },

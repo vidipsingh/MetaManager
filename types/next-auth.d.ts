@@ -3,7 +3,7 @@ import NextAuth from "next-auth";
 
 declare module "next-auth" {
   interface Session {
-    customToken?: string;
+    accessToken?: string; // Replace customToken with accessToken
     user: {
       id: string;
       email?: string | null; // Make optional to match reality

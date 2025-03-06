@@ -197,7 +197,7 @@ const authOptions: AuthOptions = {
         session.user.ethAddress = token.ethAddress as string | undefined;
         session.user.organizationId = token.organizationId as string | undefined;
 
-        const customToken = jwt.sign(
+        const accessToken = jwt.sign(
           {
             userId: token.id,
             email: session.user.email,
@@ -208,7 +208,7 @@ const authOptions: AuthOptions = {
           { expiresIn: "24h" }
         );
 
-        session.accessToken = customToken;
+        session.accessToken = accessToken;
       }
       return session;
     },

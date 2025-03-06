@@ -41,7 +41,7 @@ const DashboardContent = ({ onTodoClick, teamMembersCount }: Props) => {
       try {
         const response = await fetch("/api/todos", {
           headers: {
-            Authorization: `Bearer ${session?.customToken}`,
+            Authorization: `Bearer ${session?.accessToken}`,
           },
         });
         if (response.ok) {
@@ -57,7 +57,7 @@ const DashboardContent = ({ onTodoClick, teamMembersCount }: Props) => {
       try {
         const response = await fetch("/api/calendar", {
           headers: {
-            Authorization: `Bearer ${session?.customToken}`,
+            Authorization: `Bearer ${session?.accessToken}`,
           },
         });
         if (response.ok) {

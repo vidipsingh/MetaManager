@@ -84,7 +84,7 @@ function DashboardContentWrapper() {
         const res = await fetch("/api/getUserData", {
           method: "GET",
           headers: {
-            Authorization: `Bearer ${token || session?.customToken}`,
+            Authorization: `Bearer ${token || session?.accessToken}`,
           },
         });
         if (res.ok) {
@@ -98,7 +98,7 @@ function DashboardContentWrapper() {
 
           const usersRes = await fetch("/api/getAllUsers", {
             headers: {
-              Authorization: `Bearer ${token || session?.customToken}`,
+              Authorization: `Bearer ${token || session?.accessToken}`,
             },
           });
           if (usersRes.ok) {

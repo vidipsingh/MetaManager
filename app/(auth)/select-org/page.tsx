@@ -25,10 +25,10 @@ const SelectOrganization = () => {
 
     const fetchOrganizations = async () => {
       try {
-        console.log("Fetching organizations with token:", session?.customToken);
+        console.log("Fetching organizations with token:", session?.accessToken); // Updated to accessToken
         const res = await fetch("/api/organizations", {
           headers: {
-            Authorization: `Bearer ${session?.customToken}`,
+            Authorization: `Bearer ${session?.accessToken || ""}`, // Updated to accessToken
           },
         });
         if (res.ok) {
@@ -42,13 +42,13 @@ const SelectOrganization = () => {
       }
     };
 
-    if (status === "authenticated" && session?.customToken) {
+    if (status === "authenticated" && session?.accessToken) { // Updated to accessToken
       fetchOrganizations();
     }
   }, [status, router, session]);
 
   const handleCreateOrg = async () => {
-    if (!session?.customToken) {
+    if (!session?.accessToken) { // Updated to accessToken
       setMessage("You must be signed in to create an organization");
       setAlertSeverity("error");
       setShowAlert(true);
@@ -57,12 +57,12 @@ const SelectOrganization = () => {
     }
 
     try {
-      console.log("Creating organization with token:", session.customToken);
+      console.log("Creating organization with token:", session.accessToken); // Updated to accessToken
       const res = await fetch("/api/organizations", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${session.customToken}`,
+          Authorization: `Bearer ${session.accessToken}`, // Updated to accessToken
         },
         body: JSON.stringify({ name: orgName }),
       });
@@ -88,7 +88,7 @@ const SelectOrganization = () => {
   };
 
   const handleSelectOrg = async (orgId: string) => {
-    if (!session?.customToken) {
+    if (!session?.accessToken) { // Updated to accessToken
       setMessage("You must be signed in to join an organization");
       setAlertSeverity("error");
       setShowAlert(true);
@@ -97,12 +97,12 @@ const SelectOrganization = () => {
     }
 
     try {
-      console.log("Joining organization with token:", session.customToken, "orgId:", orgId);
+      console.log("Joining organization with token:", session.accessToken, "orgId:", orgId); // Updated to accessToken
       const res = await fetch("/api/join-organization", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${session.customToken}`,
+          Authorization: `Bearer ${session.accessToken}`, // Updated to accessToken
         },
         body: JSON.stringify({ organizationId: orgId }),
       });

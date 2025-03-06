@@ -45,7 +45,7 @@ const Header = ({ onToggleSidebar, onLogout, isMobile, userName, orgName }: Head
         const res = await fetch("/api/getUserData", {
           method: "GET",
           headers: {
-            Authorization: `Bearer ${token || session?.customToken}`,
+            Authorization: `Bearer ${token || session?.accessToken}`,
           },
         });
         if (res.ok) {

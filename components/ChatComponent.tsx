@@ -32,7 +32,7 @@ interface ChatComponentProps {
 
 const ChatComponent: React.FC<ChatComponentProps> = ({ initialSelectedUserId }) => {
   const { data: session, status } = useSession();
-  const [socket, setSocket] = useState<any>(null);
+  const [socket, setSocket] = useState<ReturnType<typeof io> | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [allUsers, setAllUsers] = useState<User[]>([]);
@@ -224,7 +224,7 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ initialSelectedUserId }) 
                 <div className="flex items-center gap-2">
                   <Avatar className="w-8 h-8">
                     <AvatarFallback className="bg-purple-600 text-white">
-                      {user.name?.[0] || user.email?.[0] || user.id?.slice(0, 1) || "?"}
+                      {user.name?.[0] || user.email?.[0] || (user as User).id?.slice(0, 1) || "?"}
                     </AvatarFallback>
                   </Avatar>
                   <span className="font-semibold text-sm">{user.name || user.email || `User_${user.id.slice(0, 4)}`}</span>
@@ -241,7 +241,8 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ initialSelectedUserId }) 
             <div className="space-y-4 min-h-full">
               {messages.map((message) => {
                 const isCurrentUser = message.senderId === session?.user?.id;
-                const user = allUsers.find((u) => u.id === message.senderId) || {
+                const user: User = allUsers.find((u) => u.id === message.senderId) || {
+                  id: message.senderId,
                   name: `User_${message.senderId.slice(0, 4)}`,
                   email: undefined,
                 };

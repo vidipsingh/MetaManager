@@ -43,7 +43,7 @@ const CallComponent = () => {
         console.log("Fetching users for CallComponent, session:", session);
         const res = await fetch("/api/getAllUsers", {
           headers: {
-            Authorization: `Bearer ${session?.customToken}`,
+            Authorization: `Bearer ${session?.accessToken}`,
           },
         });
         if (res.ok) {
